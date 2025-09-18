@@ -22,8 +22,8 @@ export default function Navbar() {
         <Link href="/calculator" className="hover:text-gray-300">
           Calculator
         </Link>
-        <Link href="/settings" className="hover:text-gray-300">
-          Settings
+        <Link href="/admin" className="hover:text-gray-300">
+          Admin
         </Link>
       </div>
 
