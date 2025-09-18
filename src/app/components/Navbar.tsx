@@ -22,8 +22,8 @@ export default function Navbar() {
         <Link href="/calculator" className="hover:text-gray-300">
           Calculator
         </Link>
-        <Link href="/settings" className="hover:text-gray-300">
-          Settings
+        <Link href="/admin" className="hover:text-gray-300">
+          Admin
         </Link>
       </div>
 
@@ -53,8 +53,8 @@ export default function Navbar() {
           <Link href="/tariffs" onClick={() => setIsOpen(false)}>
             Tariffs
           </Link>
-          <Link href="/settings" onClick={() => setIsOpen(false)}>
-            Settings
+          <Link href="/admin" onClick={() => setIsOpen(false)}>
+            Admin
           </Link>
           <button
             className="mt-2 text-left text-red-400"
