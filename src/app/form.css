@@ -17,7 +17,7 @@
     @apply w-full px-3 py-2 border border-gray-300 rounded-md 
            text-gray-700 placeholder-gray-300 
            focus:outline-none focus:ring-2 focus:ring-blue-500;
-    /* Custom arrowhead*/
+    /* Custom arrowhead */
     appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg fill='none' stroke='%23666' stroke-width='2' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
     background-repeat: no-repeat;
