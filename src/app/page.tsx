@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 export default function HomePage() {
   return (
@@ -13,89 +13,165 @@ export default function HomePage() {
             <span className="text-xl font-bold text-white">Tariffic</span>
           </div>
           <div className="space-x-6">
-            <a href="/calculator" className="text-gray-300 hover:text-white">Calculator</a>
-            <a href="/admin" className="text-gray-300 hover:text-white">Admin</a>
+            <a
+              href="/calculator"
+              className="text-gray-300 hover:text-white transition-colors"
+            >
+              Calculator
+            </a>
+            <a
+              href="/admin"
+              className="text-gray-300 hover:text-white transition-colors"
+            >
+              Admin
+            </a>
           </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="py-20 text-center">
-        <div className="max-w-4xl mx-auto px-4">
-          <h1 className="text-5xl font-bold text-white mb-6">
-            Calculate tariffs fast and easy
+      <section className="py-16 text-center">
+        <div className="max-w-3xl mx-auto px-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
+            Your end-to-end tariff calculation platform
           </h1>
-          <p className="text-xl text-gray-300 mb-8">
-            Get duty rates instantly. Compare countries. Stay compliant with trade policies.
+          <p className="text-lg text-gray-400 mb-8 max-w-2xl mx-auto font-light">
+            Tariffic coordinates global trade compliance — empowering businesses
+            to calculate duties, compare rates, and stay compliant with trade
+            policies worldwide.
           </p>
-          <a href="/calculator" className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg text-lg hover:bg-blue-700">
+          <a
+            href="/calculator"
+            className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-md text-base font-medium hover:bg-blue-700 transition-colors"
+          >
             Get Started
           </a>
         </div>
+
+        {/* Hero Image */}
+        {/* <div className="mt-12 max-w-4xl mx-auto px-4">
+          <div className="relative">
+            <img
+              src=""
+              alt="Global trade and shipping containers"
+              className="w-full h-64 md:h-80 object-cover rounded-lg shadow-2xl"
+            />
+            <div className="absolute inset-0 bg-blue-900 bg-opacity-20 rounded-lg"></div>
+          </div>
+        </div> */}
       </section>
 
       {/* Features */}
-      <section className="py-16 bg-gray-800">
+      <section className="py-12 bg-gray-800">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-white">What we do</h2>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center p-6 bg-gray-700 rounded-lg">
-              <div className="w-12 h-12 bg-blue-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-semibold text-white mb-2">
+              Digitize tariff calculations for visibility and control
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="p-5 bg-gray-700/50 rounded-lg border border-gray-600/30">
+              <div className="w-10 h-10 bg-blue-600 rounded-lg mb-3 flex items-center justify-center">
+                {/* Calculator Icon */}
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H6zm1 2a1 1 0 000 2h6a1 1 0 100-2H7zm6 7a1 1 0 112 0v3a1 1 0 11-2 0v-3zm-3 3a1 1 0 100 2h.01a1 1 0 100-2H10zm-4 1a1 1 0 011-1h.01a1 1 0 110 2H7a1 1 0 01-1-1zm1-4a1 1 0 100 2h.01a1 1 0 100-2H7zm2 0a1 1 0 100 2h.01a1 1 0 100-2H9zm4 0a1 1 0 100 2h.01a1 1 0 100-2h-.01zm-6-2a1 1 0 100 2h.01a1 1 0 100-2H7zm2 0a1 1 0 100 2h.01a1 1 0 100-2H9zm4 0a1 1 0 100 2h.01a1 1 0 100-2h-.01z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">Fast Calculator</h3>
-              <p className="text-gray-300">Calculate tariff rates in seconds with our smart tool</p>
+              <h3 className="text-lg font-medium mb-2 text-white">
+                Instant Rate Calculations
+              </h3>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Get accurate tariff rates and duty calculations in real-time
+                across multiple countries and product codes.
+              </p>
             </div>
 
-            <div className="text-center p-6 bg-gray-700 rounded-lg">
-              <div className="w-12 h-12 bg-green-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <div className="p-5 bg-gray-700/50 rounded-lg border border-gray-600/30">
+              <div className="w-10 h-10 bg-green-600 rounded-lg mb-3 flex items-center justify-center">
+                {/* Chart Bar Icon */}
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">Detailed Results</h3>
-              <p className="text-gray-300">View comprehensive results and compare rates</p>
+              <h3 className="text-lg font-medium mb-2 text-white">
+                Comprehensive Trade Data
+              </h3>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Access detailed tariff breakdowns, compare rates across
+                countries, and leverage data to optimize import strategies.
+              </p>
             </div>
 
-            <div className="text-center p-6 bg-gray-700 rounded-lg">
-              <div className="w-12 h-12 bg-purple-600 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <div className="p-5 bg-gray-700/50 rounded-lg border border-gray-600/30">
+              <div className="w-10 h-10 bg-purple-600 rounded-lg mb-3 flex items-center justify-center">
+                {/* Cog Icon */}
+                <svg
+                  className="w-5 h-5 text-white"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold mb-2 text-white">Admin Panel</h3>
-              <p className="text-gray-300">Manage settings and user data through admin interface</p>
+              <h3 className="text-lg font-medium mb-2 text-white">
+                Management Dashboard
+              </h3>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Manage tariff databases, user access, and system configurations
+                with enterprise-grade administrative tools.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-blue-600 text-white text-center">
-        <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-3xl font-bold mb-4">Ready to start?</h2>
-          <p className="text-xl mb-8">Join companies using Tariffic for their trade operations.</p>
-          <a href="/calculator" className="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg text-lg hover:bg-gray-100">
-            Try Calculator
+      <section className="py-12 bg-blue-600 text-white">
+        <div className="max-w-3xl mx-auto px-4 text-center">
+          <h2 className="text-2xl font-semibold mb-3">
+            Put us to work as your global trade platform
+          </h2>
+          <p className="text-base mb-6 font-light opacity-90">
+            Join hundreds of companies using Tariffic for their trade compliance
+            calculations.
+          </p>
+          <a
+            href="/calculator"
+            className="inline-block bg-white text-blue-600 px-6 py-2.5 rounded-md text-base font-medium hover:bg-gray-50 transition-colors"
+          >
+            Start Calculating
           </a>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-black text-white py-8">
+      <footer className="bg-black text-white py-6">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center space-x-2">
               <div className="w-6 h-6 bg-blue-600 rounded flex items-center justify-center">
                 <span className="text-white text-sm font-bold">T</span>
               </div>
-              <span className="font-bold">Tariffic</span>
+              <span className="font-medium">Tariffic</span>
             </div>
-            <div className="text-gray-400">
+            <div className="text-gray-500 text-sm">
               © 2025 Tariffic. All rights reserved.
             </div>
           </div>
