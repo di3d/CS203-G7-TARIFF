@@ -1,11 +1,19 @@
-// src/app/components/Navbar.tsx
 "use client";
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../(dashboard)/context/AuthContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { isLoggedIn, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   return (
     <nav className="w-full bg-gray-900 text-white p-4 flex items-center justify-between">
@@ -22,49 +30,34 @@ export default function Navbar() {
         <Link href="/calculator" className="hover:text-gray-300">
           Calculator
         </Link>
-        <Link href="/admin" className="hover:text-gray-300">
-          Admin
-        </Link>
-      </div>
-
-      {/* User profile (placeholder) */}
-      <div className="hidden md:flex items-center gap-3">
-        <span className="text-sm">Hello, User</span>
-        <button className="rounded-full bg-gray-700 w-8 h-8 flex items-center justify-center">
-          U
-        </button>
-      </div>
-
-      {/* Mobile menu button */}
-      <button
-        className="md:hidden text-white text-xl"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle menu"
-      >
-        {isOpen ? "✕" : "☰"}
-      </button>
-
-      {/* Mobile dropdown */}
-      {isOpen && (
-        <div className="absolute top-16 left-0 w-full bg-gray-800 flex flex-col gap-4 p-4 md:hidden">
-          <Link href="/dashboard" onClick={() => setIsOpen(false)}>
-            Dashboard
-          </Link>
-          <Link href="/tariffs" onClick={() => setIsOpen(false)}>
-            Tariffs
-          </Link>
-          <Link href="/admin" onClick={() => setIsOpen(false)}>
+        {isLoggedIn && (
+          <Link href="/admin" className="hover:text-gray-300">
             Admin
           </Link>
-          <button
-            className="mt-2 text-left text-red-400"
-            onClick={() => alert("Logging out…")}
+        )}
+      </div>
+
+      {/* Right side */}
+      <div className="hidden md:flex items-center gap-3">
+        {isLoggedIn ? (
+          <>
+            <span className="text-sm">Hello, Admin</span>
+            <button
+              onClick={handleLogout}
+              className="rounded bg-red-600 px-3 py-1 text-sm hover:bg-red-700"
+            >
+              Logout
+            </button>
+          </>
+        ) : (
+          <Link
+            href="/login"
+            className="rounded bg-blue-600 px-3 py-1 text-sm hover:bg-blue-700"
           >
-            Logout
-          </button>
-        </div>
-      )}
+            Login
+          </Link>
+        )}
+      </div>
     </nav>
   );
 }
-  
