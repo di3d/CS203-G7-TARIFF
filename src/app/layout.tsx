@@ -1,11 +1,12 @@
-// src/app/layout.tsx
-import "./globals.css";
-import "./form.css";
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Tariffic",
-  description: "Manage tariffs efficiently",
+  title: "Tariffic - Professional Tariff Calculator",
+  description: "Calculate import duties and tariffs for international trade. Real-time calculations for 60+ countries worldwide.",
 };
 
 export default function RootLayout({
@@ -15,9 +16,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-gray-50 text-gray-900">
-        {children}
-      </body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
