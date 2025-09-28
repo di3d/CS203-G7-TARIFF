@@ -1,5 +1,15 @@
-// src/app/(dashboard)/layout.tsx
-import Navbar from "../components/Navbar";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import Navbar from "@/components/navbar/navbar";
+import Footer from "@/components/footer";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Tariffic - Professional Tariff Calculator",
+  description:
+    "Calculate import duties and tariffs for international trade. Real-time calculations for 60+ countries worldwide.",
+};
 
 export default function DashboardLayout({
   children,
@@ -7,9 +17,10 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className={inter.className}>
       <Navbar />
-      <main className="flex-1 p-6">{children}</main>
+      {children}
+      <Footer />
     </div>
   );
 }
