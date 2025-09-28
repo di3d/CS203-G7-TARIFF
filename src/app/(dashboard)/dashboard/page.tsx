@@ -22,7 +22,7 @@ export default function DashboardPage() {
     <div>
       <h1 className="text-2xl font-bold">Dashboard</h1>
       {/*yan's testing random sql stuff here, DONT DELETE*/}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-black rounded-lg shadow-md p-6">
         <h1 className="text-xl font-bold">Tariffs in Effect</h1>
         <table className="min-w-full border  dark:border-gray-700 overflow-hidden">
           <thead className="bg-gray-100 dark:bg-gray-800">
