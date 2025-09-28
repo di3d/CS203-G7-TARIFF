@@ -1,0 +1,23 @@
+meta {
+  name: Add New Tariff
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8080/tariffs
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "hsCode": "85044",
+    "description": "testing",
+    "rate": 5.0
+  }
+}
+
+settings {
+  encodeUrl: true
+}
