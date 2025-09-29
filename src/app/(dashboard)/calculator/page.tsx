@@ -1,55 +1,59 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
-// Mock data
-const COMMODITIES = [
-  {
-    htsCode: "8471.30",
-    description: "Portable automatic data processing machines",
-  },
-  { htsCode: "8517.12", description: "Telephones for cellular networks" },
-  { htsCode: "8528.72", description: "Monitors and projectors" },
-  { htsCode: "8542.31", description: "Electronic integrated circuits" },
-  { htsCode: "9504.50", description: "Video game consoles and machines" },
-];
+// API data structure
+interface HSCode {
+  id: number;
+  code: string;
+  description: string;
+}
 
-const COUNTRIES = [
-  "Singapore 🇸🇬",
-  "United States 🇺🇸",
-  "China 🇨🇳",
-  "Germany 🇩🇪",
-  "Japan 🇯🇵",
-  "South Korea 🇰🇷",
-  "Vietnam 🇻🇳",
-  "Mexico 🇲🇽",
-  "Canada 🇨🇦",
-  "Taiwan 🇹🇼",
-  "Malaysia 🇲🇾",
-];
-
-const TRANSPORT_MODES = ["Air", "Sea", "Road", "Rail"];
+interface Country {
+  id: number;
+  name: string;
+  tariff_rate: number;
+}
 
 export default function CalculatorPage() {
   const router = useRouter();
+  const [commodities, setCommodities] = useState<HSCode[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
   const [formData, setFormData] = useState({
-    htsCode: "",
+    hsCode: "", // Changed from hsCode
     commodityDescription: "",
     shipmentValue: "1000",
     originCountry: "",
-    exportCountry: "",
+    importingCountry: "",
     transportMode: "",
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [hsCodesResponse, countriesResponse] = await Promise.all([
+          axios.get("http://localhost:8080/hscodes"),
+          axios.get("http://localhost:8080/countries"),
+        ]);
+        setCommodities(hsCodesResponse.data);
+        setCountries(countriesResponse.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
 
-    if (name === "htsCode") {
-      // Show commodity description for valid HTS code
-      const commodity = COMMODITIES.find((item) => item.htsCode === value);
+    if (name === "hsCode") {
+      const commodity = commodities.find((item) => item.code === value);
       setFormData((prev) => ({
         ...prev,
         [name]: value,
@@ -65,17 +69,17 @@ export default function CalculatorPage() {
 
     // Validate form
     if (
-      !formData.htsCode ||
+      !formData.hsCode ||
       !formData.shipmentValue ||
       !formData.originCountry ||
-      !formData.exportCountry ||
+      !formData.importingCountry ||
       !formData.transportMode
     ) {
       alert("Please fill in all required fields");
       return;
     }
 
-    // Navigate to results page with form parameters
+    // Navigate to results page with form params
     const queryParams = new URLSearchParams();
     Object.entries(formData).forEach(([key, value]) => {
       if (value) queryParams.append(key, value);
@@ -84,7 +88,7 @@ export default function CalculatorPage() {
     router.push(`/calculator/results?${queryParams.toString()}`);
   };
 
-  // Inline style for dropdown arrow
+  // Custom style for dropdown arrow
   const dropdownArrowStyle = {
     appearance: "none",
     backgroundImage:
@@ -98,27 +102,33 @@ export default function CalculatorPage() {
     <div>
       <h1 className="text-2xl font-bold mb-4">Tariff Calculator</h1>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-lg shadow-md p-6"
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* HTS code */}
+          {/* HS Code */}
           <div className="md:col-span-2">
-            <label htmlFor="htsCode" className="block text-base font-bold text-gray-800 mb-1">
-              HTS Code
+            <label
+              htmlFor="hsCode"
+              className="block text-base font-bold text-gray-800 mb-1"
+            >
+              HS Code
             </label>
             <input
               type="text"
-              id="htsCode"
-              name="htsCode"
+              id="hsCode"
+              name="hsCode"
               placeholder="8471.30"
-              value={formData.htsCode}
+              value={formData.hsCode}
               onChange={handleInputChange}
-              list="htsCodes"
+              list="hsCodes"
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
-            <datalist id="htsCodes">
-              {COMMODITIES.map((item) => (
-                <option key={item.htsCode} value={item.htsCode}>
+            <datalist id="hsCodes">
+              {commodities.map((item) => (
+                <option key={item.id} value={item.code}>
                   {item.description}
                 </option>
               ))}
@@ -130,9 +140,12 @@ export default function CalculatorPage() {
             )}
           </div>
 
-          {/* Shipment value */}
+          {/* Shipment Value (USD) */}
           <div>
-            <label htmlFor="shipmentValue" className="block text-base font-bold text-gray-800 mb-1">
+            <label
+              htmlFor="shipmentValue"
+              className="block text-base font-bold text-gray-800 mb-1"
+            >
               Shipment Value (USD)
             </label>
             <input
@@ -148,9 +161,12 @@ export default function CalculatorPage() {
             />
           </div>
 
-          {/* Mode of transport */}
+          {/* Mode of Transport */}
           <div>
-            <label htmlFor="transportMode" className="block text-base font-bold text-gray-800 mb-1">
+            <label
+              htmlFor="transportMode"
+              className="block text-base font-bold text-gray-800 mb-1"
+            >
               Mode of Transport
             </label>
             <select
@@ -163,7 +179,7 @@ export default function CalculatorPage() {
               required
             >
               <option value="">Select a mode</option>
-              {TRANSPORT_MODES.map((mode) => (
+              {["Air", "Sea", "Road", "Rail"].map((mode) => (
                 <option key={mode} value={mode}>
                   {mode}
                 </option>
@@ -171,9 +187,12 @@ export default function CalculatorPage() {
             </select>
           </div>
 
-          {/* Origin country */}
+          {/* Country of Origin */}
           <div>
-            <label htmlFor="originCountry" className="block text-base font-bold text-gray-800 mb-1">
+            <label
+              htmlFor="originCountry"
+              className="block text-base font-bold text-gray-800 mb-1"
+            >
               Country of Origin
             </label>
             <select
@@ -186,39 +205,42 @@ export default function CalculatorPage() {
               required
             >
               <option value="">Select a country</option>
-              {COUNTRIES.map((country) => (
-                <option key={country} value={country}>
-                  {country}
+              {countries.map((country) => (
+                <option key={country.id} value={country.name}>
+                  {country.name}
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Export country */}
+          {/* Importing Country */}
           <div>
-            <label htmlFor="exportCountry" className="block text-base font-bold text-gray-800 mb-1">
-              Country of Export
+            <label
+              htmlFor="importingCountry"
+              className="block text-base font-bold text-gray-800 mb-1"
+            >
+              Importing Country
             </label>
             <select
-              id="exportCountry"
-              name="exportCountry"
-              value={formData.exportCountry}
+              id="importingCountry"
+              name="importingCountry"
+              value={formData.importingCountry}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
               style={dropdownArrowStyle}
               required
             >
               <option value="">Select a country</option>
-              {COUNTRIES.map((country) => (
-                <option key={country} value={country}>
-                  {country}
+              {countries.map((country) => (
+                <option key={country.id} value={country.name}>
+                  {country.name}
                 </option>
               ))}
             </select>
           </div>
         </div>
 
-        {/* Calculate */}
+        {/* Calculate Button */}
         <div className="mt-8 flex justify-center">
           <button
             type="submit"
