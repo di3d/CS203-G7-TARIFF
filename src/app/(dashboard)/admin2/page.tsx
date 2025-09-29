@@ -1,5 +1,5 @@
 import CountryDetails from "@/app/components/DefaultCountryTariffs";
-import TariffByCountry from "@app/components/TariffByCountry";
+import TariffsCRUD from "@/app/components/TariffsCRUD";
 import axios from "axios";
 
 
@@ -10,6 +10,8 @@ export default function AdminPage() {
 
 
                 <CountryDetails/>
+
+                <TariffsCRUD/>
         </div>
     );
 }
