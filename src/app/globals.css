@@ -114,6 +114,18 @@
   }
 }
 
+/* Tooltip overrides for react-tooltip */
+.react-tooltip {
+  z-index: 9999 !important;
+}
+
+/* Dark mode support for tooltips */
+.dark .react-tooltip {
+  background-color: hsl(var(--background)) !important;
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
