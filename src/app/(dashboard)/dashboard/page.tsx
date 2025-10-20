@@ -1,6 +1,8 @@
 // src/app/(dashboard)/dashboard/page.tsx
 "use client";
 import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
 
 type Tariff = {
   id: number;
@@ -36,56 +38,59 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-
-      <div className="bg-black rounded-lg shadow-md p-6 mt-4">
-        <h1 className="text-xl font-bold text-white">Tariffs in Effect</h1>
-
-        {error ? (
-          <p className="text-red-500 mt-2">{error}</p>
-        ) : (
-          <table className="min-w-full border dark:border-gray-700 overflow-hidden mt-4">
-            <thead className="bg-gray-100 dark:bg-gray-800">
-              <tr>
-                <th className="px-4 py-2 border-b dark:border-gray-700 text-gray-200">
-                  Country A
-                </th>
-                <th className="px-4 py-2 border-b dark:border-gray-700 text-gray-200">
-                  Country B
-                </th>
-                <th className="px-4 py-2 border-b dark:border-gray-700 text-gray-200">
-                  HS Code
-                </th>
-                <th className="px-4 py-2 border-b dark:border-gray-700 text-gray-200">
-                  Rate (%)
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {tariffs.map((t, index) => (
-                <tr
-                  key={`${t.countryA}-${t.countryB}-${t.hsCode}-${index}`}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <td className="px-4 py-2 border-b dark:border-gray-700 text-gray-100">
-                    {t.countryA}
-                  </td>
-                  <td className="px-4 py-2 border-b dark:border-gray-700 text-gray-100">
-                    {t.countryB}
-                  </td>
-                  <td className="px-4 py-2 border-b dark:border-gray-700 text-gray-100">
-                    {t.hsCode}
-                  </td>
-                  <td className="px-4 py-2 border-b dark:border-gray-700 text-gray-100">
-                    {t.rate}%
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">Overview of active tariffs</p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Tariffs in Effect</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {error ? (
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <p>{error}</p>
+            </div>
+          ) : (
+            <div className="rounded-md border">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-3 text-left text-sm font-medium">
+                      Country A
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">
+                      Country B
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">
+                      HS Code
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">
+                      Rate (%)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tariffs.map((t, index) => (
+                    <tr
+                      key={`${t.countryA}-${t.countryB}-${t.hsCode}-${index}`}
+                      className="border-b last:border-0 hover:bg-muted/50 transition-colors"
+                    >
+                      <td className="px-4 py-3 text-sm">{t.countryA}</td>
+                      <td className="px-4 py-3 text-sm">{t.countryB}</td>
+                      <td className="px-4 py-3 text-sm font-mono">{t.hsCode}</td>
+                      <td className="px-4 py-3 text-sm">{t.rate}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

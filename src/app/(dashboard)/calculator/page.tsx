@@ -3,6 +3,18 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calculator } from "lucide-react";
 
 // API data structure
 interface HSCode {
@@ -75,10 +87,13 @@ export default function CalculatorPage() {
     }
   };
 
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate form
     if (
       !formData.hsCode ||
       !formData.shipmentValue ||
@@ -91,7 +106,6 @@ export default function CalculatorPage() {
       return;
     }
 
-    // Navigate to results page with form params
     const queryParams = new URLSearchParams();
     Object.entries(formData).forEach(([key, value]) => {
       if (value) queryParams.append(key, value);
@@ -100,186 +114,149 @@ export default function CalculatorPage() {
     router.push(`/calculator/results?${queryParams.toString()}`);
   };
 
-  // Custom style for dropdown arrow
-  const dropdownArrowStyle = {
-    appearance: "none",
-    backgroundImage:
-      "url(\"data:image/svg+xml;charset=UTF-8,%3Csvg fill='none' stroke='%23666' stroke-width='2' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E\")",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 0.75rem center",
-    backgroundSize: "1rem",
-  };
-
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Tariff Calculator</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Tariff Calculator</h1>
+        <p className="text-muted-foreground">
+          Calculate tariffs and import duties
+        </p>
+      </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-lg shadow-md p-6"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* HS Code */}
-          <div className="md:col-span-2">
-            <label
-              htmlFor="hsCode"
-              className="block text-base font-bold text-gray-800 mb-1"
-            >
-              HS Code
-            </label>
-            <input
-              type="text"
-              id="hsCode"
-              name="hsCode"
-              placeholder="8471.30"
-              value={formData.hsCode}
-              onChange={handleInputChange}
-              list="hsCodes"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <datalist id="hsCodes">
-              {commodities.map((item) => (
-                <option key={item.id} value={item.code}>
-                  {item.description}
-                </option>
-              ))}
-            </datalist>
-            {formData.commodityDescription && (
-              <p className="text-gray-700 mt-2">
-                Commodity Description: {formData.commodityDescription}
-              </p>
-            )}
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calculator className="h-5 w-5" />
+            Calculate Tariff
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* HS Code */}
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="hsCode">HS Code</Label>
+                <Input
+                  type="text"
+                  id="hsCode"
+                  name="hsCode"
+                  placeholder="8471.30"
+                  value={formData.hsCode}
+                  onChange={handleInputChange}
+                  list="hsCodes"
+                  required
+                />
+                <datalist id="hsCodes">
+                  {commodities.map((item) => (
+                    <option key={item.id} value={item.code}>
+                      {item.description}
+                    </option>
+                  ))}
+                </datalist>
+                {formData.commodityDescription && (
+                  <p className="text-sm text-muted-foreground">
+                    {formData.commodityDescription}
+                  </p>
+                )}
+              </div>
 
-          {/* Shipment Value */}
-          <div>
-            <label
-              htmlFor="shipmentValue"
-              className="block text-base font-bold text-gray-800 mb-1"
-            >
-              Shipment Value
-            </label>
-            <input
-              type="number"
-              id="shipmentValue"
-              name="shipmentValue"
-              value={formData.shipmentValue}
-              onChange={handleInputChange}
-              min="0"
-              step="1"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
+              {/* Shipment Value */}
+              <div className="space-y-2">
+                <Label htmlFor="shipmentValue">Shipment Value</Label>
+                <Input
+                  type="number"
+                  id="shipmentValue"
+                  name="shipmentValue"
+                  value={formData.shipmentValue}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="1"
+                  required
+                />
+              </div>
 
-          {/* Currency */}
-          <div>
-            <label
-              htmlFor="currency"
-              className="block text-base font-bold text-gray-800 mb-1"
-            >
-              Currency
-            </label>
-            <select
-              id="currency"
-              name="currency"
-              value={formData.currency}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
-              style={dropdownArrowStyle}
-              required
-            >
-              {CURRENCIES.map((curr) => (
-                <option key={curr.code} value={curr.code}>
-                  {curr.code} - {curr.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              {/* Currency */}
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Select
+                  value={formData.currency}
+                  onValueChange={(value) => handleSelectChange("currency", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((curr) => (
+                      <SelectItem key={curr.code} value={curr.code}>
+                        {curr.code} - {curr.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Country of Origin */}
-          <div>
-            <label
-              htmlFor="originCountry"
-              className="block text-base font-bold text-gray-800 mb-1"
-            >
-              Country of Origin
-            </label>
-            <select
-              id="originCountry"
-              name="originCountry"
-              value={formData.originCountry}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
-              style={dropdownArrowStyle}
-              required
-            >
-              <option value="">Select a country</option>
-              {countries.map((country) => (
-                <option key={country.id} value={country.name}>
-                  {country.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              {/* Country of Origin */}
+              <div className="space-y-2">
+                <Label htmlFor="originCountry">Country of Origin</Label>
+                <Select
+                  value={formData.originCountry}
+                  onValueChange={(value) => handleSelectChange("originCountry", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country.id} value={country.name}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Importing Country */}
-          <div>
-            <label
-              htmlFor="importingCountry"
-              className="block text-base font-bold text-gray-800 mb-1"
-            >
-              Importing Country
-            </label>
-            <select
-              id="importingCountry"
-              name="importingCountry"
-              value={formData.importingCountry}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
-              style={dropdownArrowStyle}
-              required
-            >
-              <option value="">Select a country</option>
-              {countries.map((country) => (
-                <option key={country.id} value={country.name}>
-                  {country.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              {/* Importing Country */}
+              <div className="space-y-2">
+                <Label htmlFor="importingCountry">Importing Country</Label>
+                <Select
+                  value={formData.importingCountry}
+                  onValueChange={(value) => handleSelectChange("importingCountry", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country.id} value={country.name}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Date */}
-          <div>
-            <label
-              htmlFor="date"
-              className="block text-base font-bold text-gray-800 mb-1"
-            >
-              Date
-            </label>
-            <input
-              type="date"
-              id="date"
-              name="date"
-              value={formData.date}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-        </div>
+              {/* Date */}
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  type="date"
+                  id="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
 
-        {/* Calculate Button */}
-        <div className="mt-8 flex justify-center">
-          <button
-            type="submit"
-            className="px-6 py-3 bg-blue-900 text-white font-medium rounded-md hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-          >
-            Calculate
-          </button>
-        </div>
-      </form>
+            <div className="flex justify-end">
+              <Button type="submit" size="lg">
+                Calculate Tariff
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

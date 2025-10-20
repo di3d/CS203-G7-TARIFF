@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 
 // API data structure
 interface Country {
@@ -52,6 +55,7 @@ const CURRENCY_SYMBOLS: { [key: string]: string } = {
 };
 
 export default function ResultsPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -149,165 +153,190 @@ export default function ResultsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center p-6">
-        <h2 className="text-xl font-bold text-red-600 mb-4">Error</h2>
-        <p className="mb-4">{error}</p>
-        <button
-          onClick={() => window.history.back()}
-          className="px-4 py-2 bg-blue-900 text-white rounded hover:bg-blue-800"
-        >
-          Go Back
-        </button>
+      <div className="space-y-6">
+        <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              Error
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">{error}</p>
+            <Button onClick={() => router.back()} variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  // Early return if no result
   if (!result) {
     return (
-      <div className="text-center p-6">
-        <h2 className="text-xl font-bold text-gray-700 text-gray-600 mb-4">
-          No Results
-        </h2>
-        <button
-          onClick={() => window.history.back()}
-          className="px-4 py-2 bg-blue-900 text-white rounded hover:bg-blue-800"
-        >
-          Go Back
-        </button>
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>No Results</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => router.back()} variant="outline">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
-  // Get currency symbol
   const currency = searchParams.get("currency") || "USD";
   const currencySymbol = CURRENCY_SYMBOLS[currency] || "$";
 
   return (
-    <div className="mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Results</h1>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Calculation Results
+          </h1>
+          <p className="text-muted-foreground">
+            Your tariff calculation details
+          </p>
+        </div>
+        <Button onClick={() => router.back()} variant="outline">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+      </div>
 
-      <div className="space-y-6">
-        {/* Input Parameters */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">
-            Input Parameters
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2">
-              <p className="text-gray-700">
-                <span className="font-medium text-gray-700">HS Code:</span>{" "}
-                {searchParams.get("hsCode")}
-              </p>
+      {/* Input Parameters */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Input Parameters</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  HS Code
+                </p>
+                <p className="text-lg">{searchParams.get("hsCode")}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Shipment Value
+                </p>
+                <p className="text-lg">
+                  {currencySymbol}
+                  {parseFloat(searchParams.get("shipmentValue") || "0").toLocaleString()}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Currency
+                </p>
+                <p className="text-lg">{currency}</p>
+              </div>
             </div>
             <div className="space-y-4">
-              <p className="text-gray-700">
-                <span className="font-medium text-gray-700">
-                  Shipment Value:
-                </span>{" "}
-                {currencySymbol}
-                {parseFloat(
-                  searchParams.get("shipmentValue") || "0"
-                ).toLocaleString()}
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Country of Origin
+                </p>
+                <p className="text-lg">{searchParams.get("originCountry")}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Importing Country
+                </p>
+                <p className="text-lg">{searchParams.get("importingCountry")}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Date</p>
+                <p className="text-lg">
+                  {new Date(searchParams.get("date") || "").toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tariff Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Tariff Details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">
+                Rate Type
               </p>
-              <p className="text-gray-700">
-                <span className="font-medium text-gray-700">
-                  Country of Origin:
-                </span>{" "}
-                {searchParams.get("originCountry")}
+              <p className="text-lg">
+                {result.applicableTariff
+                  ? result.applicableTariff.tariff_type
+                  : "Default Country Rate"}
               </p>
             </div>
-            <div className="space-y-4">
-              <p className="text-gray-700">
-                <span className="font-medium text-gray-700">Currency:</span>{" "}
-                {currency}
+            <div>
+              <p className="text-sm font-medium text-muted-foreground mb-1">
+                Base Rate
               </p>
-              <p className="text-gray-700">
-                <span className="font-medium text-gray-700">
-                  Importing Country:
-                </span>{" "}
-                {searchParams.get("importingCountry")}
-              </p>
-            </div>
-            <div className="md:col-span-2">
-              <p className="text-gray-700">
-                <span className="font-medium text-gray-700">Date:</span>{" "}
-                {new Date(searchParams.get("date") || "").toLocaleDateString()}
+              <p className="text-lg">
+                {(result.baseTariff || 0).toFixed(1)}%
+                {result.applicableTariff && (
+                  <span className="text-sm text-muted-foreground ml-2">
+                    (Default: {(result.defaultRate || 0).toFixed(1)}%)
+                  </span>
+                )}
               </p>
             </div>
           </div>
-        </div>
 
-        {/* Tariff Details */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">
-            Tariff Details
-          </h2>
-          <div className="space-y-4">
-            <p className="text-gray-700">
-              <span className="font-medium text-gray-700">Rate Type:</span>{" "}
-              {result.applicableTariff
-                ? result.applicableTariff.tariff_type
-                : "Default Country Rate"}
-            </p>
-            <p className="text-gray-700">
-              <span className="font-medium text-gray-700">Base Rate:</span>{" "}
-              {(result.baseTariff || 0).toFixed(1)}%
-              {result.applicableTariff && (
-                <span className="text-gray-700 ml-2">
-                  (Default: {(result.defaultRate || 0).toFixed(1)}%)
-                </span>
-              )}
-            </p>
-            <p className="font-bold text-2xl text-gray-800">
-              <span>Effective Rate:</span>{" "}
-              <span className="text-red-600">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">
+                Effective Rate
+              </p>
+              <p className="text-3xl font-bold text-primary text-red-600">
                 {(result.effectiveRate || 0).toFixed(1)}%
-              </span>
-            </p>
-            <p className="font-bold text-2xl text-gray-800">
-              <span>Total Duty:</span>{" "}
-              <span className="text-red-600">
+              </p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">Total Duty</p>
+              <p className="text-3xl font-bold text-primary text-red-600">
                 {currencySymbol}
                 {(result.totalDuty || 0).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
-              </span>
-            </p>
-            {result.applicableTariff && (
-              <p className="text-gray-700">
-                Special agreement valid from{" "}
-                {new Date(
-                  result.applicableTariff.start_date
-                ).toLocaleDateString()}{" "}
-                to{" "}
-                {new Date(
-                  result.applicableTariff.end_date
-                ).toLocaleDateString()}
               </p>
-            )}
+            </div>
           </div>
-        </div>
 
-        {/* Return Button */}
-        <div className="flex justify-center">
-          <button
-            onClick={() => window.history.back()}
-            className="px-6 py-3 bg-blue-900 text-white font-medium rounded-md hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-          >
-            Return
-          </button>
-        </div>
-      </div>
+          {result.applicableTariff && (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                Special agreement valid from{" "}
+                {new Date(result.applicableTariff.start_date).toLocaleDateString()} to{" "}
+                {new Date(result.applicableTariff.end_date).toLocaleDateString()}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
