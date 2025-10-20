@@ -17,17 +17,28 @@ interface Country {
   tariff_rate: number;
 }
 
+// Currency options
+const CURRENCIES = [
+  { code: "USD", symbol: "$", name: "US Dollar" },
+  { code: "EUR", symbol: "€", name: "Euro" },
+  { code: "GBP", symbol: "£", name: "British Pound" },
+  { code: "JPY", symbol: "¥", name: "Japanese Yen" },
+  { code: "CNY", symbol: "¥", name: "Chinese Yuan" },
+  { code: "SGD", symbol: "S$", name: "Singapore Dollar" },
+];
+
 export default function CalculatorPage() {
   const router = useRouter();
   const [commodities, setCommodities] = useState<HSCode[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [formData, setFormData] = useState({
-    hsCode: "", // Changed from hsCode
+    hsCode: "",
     commodityDescription: "",
     shipmentValue: "1000",
     originCountry: "",
     importingCountry: "",
-    transportMode: "",
+    date: new Date().toISOString().split("T")[0],
+    currency: "USD",
   });
 
   useEffect(() => {
@@ -73,7 +84,8 @@ export default function CalculatorPage() {
       !formData.shipmentValue ||
       !formData.originCountry ||
       !formData.importingCountry ||
-      !formData.transportMode
+      !formData.date ||
+      !formData.currency
     ) {
       alert("Please fill in all required fields");
       return;
@@ -140,13 +152,13 @@ export default function CalculatorPage() {
             )}
           </div>
 
-          {/* Shipment Value (USD) */}
+          {/* Shipment Value */}
           <div>
             <label
               htmlFor="shipmentValue"
               className="block text-base font-bold text-gray-800 mb-1"
             >
-              Shipment Value (USD)
+              Shipment Value
             </label>
             <input
               type="number"
@@ -161,27 +173,26 @@ export default function CalculatorPage() {
             />
           </div>
 
-          {/* Mode of Transport */}
+          {/* Currency */}
           <div>
             <label
-              htmlFor="transportMode"
+              htmlFor="currency"
               className="block text-base font-bold text-gray-800 mb-1"
             >
-              Mode of Transport
+              Currency
             </label>
             <select
-              id="transportMode"
-              name="transportMode"
-              value={formData.transportMode}
+              id="currency"
+              name="currency"
+              value={formData.currency}
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
               style={dropdownArrowStyle}
               required
             >
-              <option value="">Select a mode</option>
-              {["Air", "Sea", "Road", "Rail"].map((mode) => (
-                <option key={mode} value={mode}>
-                  {mode}
+              {CURRENCIES.map((curr) => (
+                <option key={curr.code} value={curr.code}>
+                  {curr.code} - {curr.name}
                 </option>
               ))}
             </select>
@@ -237,6 +248,25 @@ export default function CalculatorPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Date */}
+          <div>
+            <label
+              htmlFor="date"
+              className="block text-base font-bold text-gray-800 mb-1"
+            >
+              Date
+            </label>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              value={formData.date}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
           </div>
         </div>
 

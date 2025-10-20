@@ -41,6 +41,16 @@ interface TariffDTO {
   endDate: string;
 }
 
+// Currency symbols
+const CURRENCY_SYMBOLS: { [key: string]: string } = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  JPY: "¥",
+  CNY: "¥",
+  SGD: "S$",
+};
+
 export default function ResultsPage() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
@@ -177,6 +187,10 @@ export default function ResultsPage() {
     );
   }
 
+  // Get currency symbol
+  const currency = searchParams.get("currency") || "USD";
+  const currencySymbol = CURRENCY_SYMBOLS[currency] || "$";
+
   return (
     <div className="mx-auto">
       <h1 className="text-2xl font-bold mb-4">Results</h1>
@@ -199,30 +213,34 @@ export default function ResultsPage() {
                 <span className="font-medium text-gray-700">
                   Shipment Value:
                 </span>{" "}
-                $
+                {currencySymbol}
                 {parseFloat(
                   searchParams.get("shipmentValue") || "0"
                 ).toLocaleString()}
               </p>
               <p className="text-gray-700">
                 <span className="font-medium text-gray-700">
-                  Mode of Transport:
+                  Country of Origin:
                 </span>{" "}
-                {searchParams.get("transportMode")}
+                {searchParams.get("originCountry")}
               </p>
             </div>
             <div className="space-y-4">
               <p className="text-gray-700">
-                <span className="font-medium text-gray-700">
-                  Country of Origin:
-                </span>{" "}
-                {searchParams.get("originCountry")}
+                <span className="font-medium text-gray-700">Currency:</span>{" "}
+                {currency}
               </p>
               <p className="text-gray-700">
                 <span className="font-medium text-gray-700">
                   Importing Country:
                 </span>{" "}
                 {searchParams.get("importingCountry")}
+              </p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-gray-700">
+                <span className="font-medium text-gray-700">Date:</span>{" "}
+                {new Date(searchParams.get("date") || "").toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -258,7 +276,7 @@ export default function ResultsPage() {
             <p className="font-bold text-2xl text-gray-800">
               <span>Total Duty:</span>{" "}
               <span className="text-red-600">
-                $
+                {currencySymbol}
                 {(result.totalDuty || 0).toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
