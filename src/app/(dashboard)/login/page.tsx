@@ -2,27 +2,38 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import bcrypt from "bcryptjs";
-import { useAuth } from "../context/AuthContext";
-
-// Hardcoded hashed password for "Admin123"
-const HASHED_PASSWORD = bcrypt.hashSync("Admin123", 10);
+import axios from "axios";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
-    if (username === "Admin" && bcrypt.compareSync(password, HASHED_PASSWORD)) {
-      login(); // update context + localStorage
-      router.push("/admin");
-    } else {
-      setError("Invalid credentials");
+    try {
+      // 🔐 Send credentials to your backend (Spring Boot)
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/users/login`,
+        { email, password }
+      );
+
+      // ✅ Store backend-issued JWT & user info
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", res.data.role);
+      localStorage.setItem("userId", res.data.id);
+
+      // Redirect based on role
+      if (res.data.role === "Admin") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard"); // or agent/client dashboard route
+      }
+    } catch (err: any) {
+      setError("Invalid credentials. Please try again.");
     }
   };
 
@@ -32,18 +43,20 @@ export default function LoginPage() {
         onSubmit={handleSubmit}
         className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 w-96"
       >
-        <h1 className="text-xl font-bold mb-4 text-center">Admin Login</h1>
+        <h1 className="text-xl font-bold mb-4 text-center">Login</h1>
         {error && <p className="text-red-500 text-sm mb-3 text-center">{error}</p>}
+
         <div className="mb-4">
-          <label className="block mb-1">Username</label>
+          <label className="block mb-1">Email</label>
           <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="form-input w-full"
             required
           />
         </div>
+
         <div className="mb-4">
           <label className="block mb-1">Password</label>
           <input
@@ -54,6 +67,7 @@ export default function LoginPage() {
             required
           />
         </div>
+
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"

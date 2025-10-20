@@ -1,17 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../(dashboard)/context/AuthContext";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { isLoggedIn, logout } = useAuth();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [role, setRole] = useState("");
   const router = useRouter();
 
+  // 🔍 Check login status and role from localStorage
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const storedRole = localStorage.getItem("role");
+    if (token) {
+      setIsLoggedIn(true);
+      setRole(storedRole || "");
+    }
+  }, []);
+
   const handleLogout = () => {
-    logout();
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("userId");
+    setIsLoggedIn(false);
     router.push("/login");
   };
 
@@ -22,7 +35,7 @@ export default function Navbar() {
         <Link href="/">Tariffic</Link>
       </div>
 
-      {/* Desktop nav */}
+      {/* Desktop Navigation */}
       <div className="hidden md:flex gap-6">
         <Link href="/dashboard" className="hover:text-gray-300">
           Dashboard
@@ -30,7 +43,9 @@ export default function Navbar() {
         <Link href="/calculator" className="hover:text-gray-300">
           Calculator
         </Link>
-        {isLoggedIn && (
+
+        {/* Only show Admin link if role is Admin */}
+        {isLoggedIn && role === "Admin" && (
           <Link href="/admin" className="hover:text-gray-300">
             Admin
           </Link>
@@ -41,7 +56,9 @@ export default function Navbar() {
       <div className="hidden md:flex items-center gap-3">
         {isLoggedIn ? (
           <>
-            <span className="text-sm">Hello, Admin</span>
+            <span className="text-sm">
+              Hello, {role === "Admin" ? "Admin" : "User"}
+            </span>
             <button
               onClick={handleLogout}
               className="rounded bg-red-600 px-3 py-1 text-sm hover:bg-red-700"
