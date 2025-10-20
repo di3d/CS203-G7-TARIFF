@@ -17,7 +17,7 @@ export default function LoginPage() {
     try {
       // 🔐 Send credentials to your backend (Spring Boot)
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/users/login`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/login`,
         { email, password }
       );
 
