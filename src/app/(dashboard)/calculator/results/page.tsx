@@ -1,47 +1,36 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import axios from "axios";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 
-// API data structure
-interface Country {
+// Backend response structure
+interface TariffAgreementDTO {
   id: number;
-  name: string;
-  tariffRate: number;
-}
-
-interface Tariff {
-  id: number;
-  country_a_id: number;
-  country_b_id: number;
-  hscode_id: number;
+  countryAId: number;
+  countryBId: number;
+  hscodeId: number;
   rate: number;
-  tariff_type: "MFN" | "AHS" | "BND";
-  start_date: string;
-  end_date: string;
+  tariffType: string;
+  startDate: string;
+  endDate: string;
 }
 
 interface CalculationResult {
   baseTariff: number;
   totalDuty: number;
   effectiveRate: number;
-  applicableTariff: Tariff | null;
+  applicableTariff: TariffAgreementDTO | null;
   defaultRate: number;
-}
-
-interface TariffDTO {
-  countryA: string;
-  countryB: string;
   hsCode: string;
-  description: string;
-  rate: number;
-  tariffType: string;
-  startDate: string;
-  endDate: string;
+  commodityDescription: string;
+  shipmentValue: number;
+  originCountry: string;
+  importingCountry: string;
+  date: string;
+  currency: string;
 }
 
 // Currency symbols
@@ -56,100 +45,39 @@ const CURRENCY_SYMBOLS: { [key: string]: string } = {
 
 export default function ResultsPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CalculationResult | null>(null);
 
   useEffect(() => {
-    const calculateTariff = async () => {
+    const loadResult = () => {
       try {
         setLoading(true);
         setError(null);
 
-        const originCountry = searchParams.get("originCountry");
-        const importingCountry = searchParams.get("importingCountry");
-        const hsCode = searchParams.get("hsCode");
-        const shipmentValue = parseFloat(
-          searchParams.get("shipmentValue") || "0"
-        );
-
-        if (
-          !originCountry ||
-          !importingCountry ||
-          !hsCode ||
-          isNaN(shipmentValue)
-        ) {
-          throw new Error("Missing or invalid parameters");
+        // Get calculation result from sessionStorage
+        const storedResult = sessionStorage.getItem("calculationResult");
+        
+        if (!storedResult) {
+          throw new Error("No calculation result found. Please perform a calculation first.");
         }
 
-        // Get data
-        const [countriesResponse, tariffsResponse] = await Promise.all([
-          axios.get<Country[]>("http://localhost:8080/countries"),
-          axios.get<TariffDTO[]>("http://localhost:8080/tariffs"),
-        ]);
-
-        // Find countries and rates
-        const origin = countriesResponse.data.find(
-          (c) => c.name === originCountry
-        );
-        const importing = countriesResponse.data.find(
-          (c) => c.name === importingCountry
-        );
-
-        if (!origin || !importing) {
-          throw new Error("Invalid country");
-        }
-
-        // Default rate is tariffRate of the importing country (country B)
-        const defaultRate = Number(importing.tariffRate) || 0;
-
-        // Check for tariff agreement
-        const specificTariff = tariffsResponse.data.find(
-          (t) =>
-            t.countryA === originCountry &&
-            t.countryB === importingCountry &&
-            t.hsCode === hsCode &&
-            new Date(t.startDate) <= new Date() &&
-            new Date(t.endDate) >= new Date()
-        );
-
-        // Use specific tariff rate if exists, otherwise use default country rate
-        const rate = specificTariff ? Number(specificTariff.rate) : defaultRate;
-        const totalDuty = (shipmentValue * rate) / 100;
-
-        setResult({
-          baseTariff: rate,
-          totalDuty: totalDuty,
-          effectiveRate: (totalDuty / shipmentValue) * 100,
-          applicableTariff: specificTariff
-            ? {
-                id: 0,
-                country_a_id: origin.id,
-                country_b_id: importing.id,
-                hscode_id: 0,
-                rate: Number(specificTariff.rate),
-                tariff_type: specificTariff.tariffType as "MFN" | "AHS" | "BND",
-                start_date: specificTariff.startDate,
-                end_date: specificTariff.endDate,
-              }
-            : null,
-          defaultRate: defaultRate,
-        });
+        const parsedResult: CalculationResult = JSON.parse(storedResult);
+        setResult(parsedResult);
       } catch (err) {
-        console.error("Error calculating tariff:", err);
+        console.error("Error loading result:", err);
         setError(
           err instanceof Error
             ? err.message
-            : "Failed to calculate tariff. Please try again."
+            : "Failed to load calculation result. Please try again."
         );
       } finally {
         setLoading(false);
       }
     };
 
-    calculateTariff();
-  }, [searchParams]);
+    loadResult();
+  }, []);
 
   if (loading) {
     return (
@@ -171,9 +99,9 @@ export default function ResultsPage() {
           </CardHeader>
           <CardContent>
             <p className="mb-4">{error}</p>
-            <Button onClick={() => router.back()} variant="outline">
+            <Button onClick={() => router.push("/calculator")} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Go Back
+              Go Back to Calculator
             </Button>
           </CardContent>
         </Card>
@@ -189,9 +117,9 @@ export default function ResultsPage() {
             <CardTitle>No Results</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => router.back()} variant="outline">
+            <Button onClick={() => router.push("/calculator")} variant="outline">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Go Back
+              Go Back to Calculator
             </Button>
           </CardContent>
         </Card>
@@ -199,8 +127,7 @@ export default function ResultsPage() {
     );
   }
 
-  const currency = searchParams.get("currency") || "USD";
-  const currencySymbol = CURRENCY_SYMBOLS[currency] || "$";
+  const currencySymbol = CURRENCY_SYMBOLS[result.currency] || "$";
 
   return (
     <div className="space-y-6">
@@ -213,7 +140,7 @@ export default function ResultsPage() {
             Your tariff calculation details
           </p>
         </div>
-        <Button onClick={() => router.back()} variant="outline">
+        <Button onClick={() => router.push("/calculator")} variant="outline">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
@@ -231,7 +158,12 @@ export default function ResultsPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   HS Code
                 </p>
-                <p className="text-lg">{searchParams.get("hsCode")}</p>
+                <p className="text-lg">{result.hsCode}</p>
+                {result.commodityDescription && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {result.commodityDescription}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -239,14 +171,14 @@ export default function ResultsPage() {
                 </p>
                 <p className="text-lg">
                   {currencySymbol}
-                  {parseFloat(searchParams.get("shipmentValue") || "0").toLocaleString()}
+                  {result.shipmentValue.toLocaleString()}
                 </p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   Currency
                 </p>
-                <p className="text-lg">{currency}</p>
+                <p className="text-lg">{result.currency}</p>
               </div>
             </div>
             <div className="space-y-4">
@@ -254,18 +186,18 @@ export default function ResultsPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Country of Origin
                 </p>
-                <p className="text-lg">{searchParams.get("originCountry")}</p>
+                <p className="text-lg">{result.originCountry}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   Importing Country
                 </p>
-                <p className="text-lg">{searchParams.get("importingCountry")}</p>
+                <p className="text-lg">{result.importingCountry}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Date</p>
                 <p className="text-lg">
-                  {new Date(searchParams.get("date") || "").toLocaleDateString()}
+                  {new Date(result.date).toLocaleDateString()}
                 </p>
               </div>
             </div>
@@ -286,7 +218,7 @@ export default function ResultsPage() {
               </p>
               <p className="text-lg">
                 {result.applicableTariff
-                  ? result.applicableTariff.tariff_type
+                  ? result.applicableTariff.tariffType
                   : "Default Country Rate"}
               </p>
             </div>
@@ -295,10 +227,10 @@ export default function ResultsPage() {
                 Base Rate
               </p>
               <p className="text-lg">
-                {(result.baseTariff || 0).toFixed(1)}%
+                {result.baseTariff.toFixed(1)}%
                 {result.applicableTariff && (
                   <span className="text-sm text-muted-foreground ml-2">
-                    (Default: {(result.defaultRate || 0).toFixed(1)}%)
+                    (Default: {result.defaultRate.toFixed(1)}%)
                   </span>
                 )}
               </p>
@@ -311,14 +243,14 @@ export default function ResultsPage() {
                 Effective Rate
               </p>
               <p className="text-3xl font-bold text-primary text-red-600">
-                {(result.effectiveRate || 0).toFixed(1)}%
+                {result.effectiveRate.toFixed(1)}%
               </p>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Total Duty</p>
               <p className="text-3xl font-bold text-primary text-red-600">
                 {currencySymbol}
-                {(result.totalDuty || 0).toLocaleString(undefined, {
+                {result.totalDuty.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -330,8 +262,8 @@ export default function ResultsPage() {
             <div className="pt-4 border-t">
               <p className="text-sm text-muted-foreground">
                 Special agreement valid from{" "}
-                {new Date(result.applicableTariff.start_date).toLocaleDateString()} to{" "}
-                {new Date(result.applicableTariff.end_date).toLocaleDateString()}
+                {new Date(result.applicableTariff.startDate).toLocaleDateString()} to{" "}
+                {new Date(result.applicableTariff.endDate).toLocaleDateString()}
               </p>
             </div>
           )}

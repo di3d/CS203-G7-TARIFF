@@ -91,7 +91,7 @@ export default function CalculatorPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (
@@ -106,12 +106,27 @@ export default function CalculatorPage() {
       return;
     }
 
-    const queryParams = new URLSearchParams();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value) queryParams.append(key, value);
-    });
+    try {
+      // Call the backend calculation API
+      const response = await axios.post("http://localhost:8080/api/calculate", {
+        hsCode: formData.hsCode,
+        commodityDescription: formData.commodityDescription,
+        shipmentValue: parseFloat(formData.shipmentValue),
+        originCountry: formData.originCountry,
+        importingCountry: formData.importingCountry,
+        date: formData.date,
+        currency: formData.currency,
+      });
 
-    router.push(`/calculator/results?${queryParams.toString()}`);
+      // Store the result in sessionStorage to pass to results page
+      sessionStorage.setItem("calculationResult", JSON.stringify(response.data));
+      
+      // Navigate to results page
+      router.push("/calculator/results");
+    } catch (error) {
+      console.error("Error calculating tariff:", error);
+      alert("Failed to calculate tariff. Please try again.");
+    }
   };
 
   return (

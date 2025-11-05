@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-} from "react-simple-maps";
+import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { Tooltip } from "react-tooltip";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
@@ -29,122 +25,122 @@ interface WorldMapProps {
   tradeAgreements: TradeAgreement[];
 }
 
-// Map GeoJSON country names to your API country names
+// Map GeoJSON country names to API country names
 const COUNTRY_NAME_MAP: { [key: string]: string } = {
   "United States of America": "United States",
   "United Kingdom": "United Kingdom",
-  "China": "China",
-  "Japan": "Japan",
-  "Germany": "Germany",
-  "France": "France",
-  "India": "India",
-  "Brazil": "Brazil",
-  "Canada": "Canada",
-  "Australia": "Australia",
+  China: "China",
+  Japan: "Japan",
+  Germany: "Germany",
+  France: "France",
+  India: "India",
+  Brazil: "Brazil",
+  Canada: "Canada",
+  Australia: "Australia",
   "South Korea": "South Korea",
-  "Korea": "South Korea",
+  Korea: "South Korea",
   "Republic of Korea": "South Korea",
-  "Mexico": "Mexico",
-  "Indonesia": "Indonesia",
-  "Netherlands": "Netherlands",
+  Mexico: "Mexico",
+  Indonesia: "Indonesia",
+  Netherlands: "Netherlands",
   "Saudi Arabia": "Saudi Arabia",
-  "Turkey": "Turkey",
-  "Türkiye": "Turkey",
-  "Switzerland": "Switzerland",
-  "Poland": "Poland",
-  "Belgium": "Belgium",
-  "Sweden": "Sweden",
-  "Argentina": "Argentina",
-  "Norway": "Norway",
-  "Austria": "Austria",
+  Turkey: "Turkey",
+  Türkiye: "Turkey",
+  Switzerland: "Switzerland",
+  Poland: "Poland",
+  Belgium: "Belgium",
+  Sweden: "Sweden",
+  Argentina: "Argentina",
+  Norway: "Norway",
+  Austria: "Austria",
   "United Arab Emirates": "United Arab Emirates",
-  "UAE": "United Arab Emirates",
-  "Nigeria": "Nigeria",
-  "Israel": "Israel",
-  "Ireland": "Ireland",
-  "Denmark": "Denmark",
-  "Singapore": "Singapore",
-  "Malaysia": "Malaysia",
+  UAE: "United Arab Emirates",
+  Nigeria: "Nigeria",
+  Israel: "Israel",
+  Ireland: "Ireland",
+  Denmark: "Denmark",
+  Singapore: "Singapore",
+  Malaysia: "Malaysia",
   "South Africa": "South Africa",
-  "Philippines": "Philippines",
-  "Colombia": "Colombia",
-  "Pakistan": "Pakistan",
-  "Chile": "Chile",
-  "Finland": "Finland",
-  "Bangladesh": "Bangladesh",
-  "Egypt": "Egypt",
-  "Vietnam": "Vietnam",
+  Philippines: "Philippines",
+  Colombia: "Colombia",
+  Pakistan: "Pakistan",
+  Chile: "Chile",
+  Finland: "Finland",
+  Bangladesh: "Bangladesh",
+  Egypt: "Egypt",
+  Vietnam: "Vietnam",
   "Viet Nam": "Vietnam",
   "Czech Republic": "Czech Republic",
-  "Czechia": "Czech Republic",
-  "Romania": "Romania",
-  "Portugal": "Portugal",
-  "Peru": "Peru",
+  Czechia: "Czech Republic",
+  Romania: "Romania",
+  Portugal: "Portugal",
+  Peru: "Peru",
   "New Zealand": "New Zealand",
-  "Greece": "Greece",
-  "Qatar": "Qatar",
-  "Algeria": "Algeria",
-  "Hungary": "Hungary",
-  "Kazakhstan": "Kazakhstan",
-  "Kuwait": "Kuwait",
-  "Morocco": "Morocco",
-  "Ecuador": "Ecuador",
-  "Slovakia": "Slovakia",
+  Greece: "Greece",
+  Qatar: "Qatar",
+  Algeria: "Algeria",
+  Hungary: "Hungary",
+  Kazakhstan: "Kazakhstan",
+  Kuwait: "Kuwait",
+  Morocco: "Morocco",
+  Ecuador: "Ecuador",
+  Slovakia: "Slovakia",
   "Slovak Republic": "Slovakia",
   "Dominican Republic": "Dominican Republic",
-  "Kenya": "Kenya",
-  "Ethiopia": "Ethiopia",
-  "Guatemala": "Guatemala",
-  "Myanmar": "Myanmar",
-  "Burma": "Myanmar",
-  "Oman": "Oman",
-  "Luxembourg": "Luxembourg",
-  "Panama": "Panama",
-  "Bulgaria": "Bulgaria",
-  "Uruguay": "Uruguay",
-  "Croatia": "Croatia",
+  Kenya: "Kenya",
+  Ethiopia: "Ethiopia",
+  Guatemala: "Guatemala",
+  Myanmar: "Myanmar",
+  Burma: "Myanmar",
+  Oman: "Oman",
+  Luxembourg: "Luxembourg",
+  Panama: "Panama",
+  Bulgaria: "Bulgaria",
+  Uruguay: "Uruguay",
+  Croatia: "Croatia",
   "Costa Rica": "Costa Rica",
-  "Lithuania": "Lithuania",
-  "Serbia": "Serbia",
-  "Slovenia": "Slovenia",
-  "Tunisia": "Tunisia",
-  "Jordan": "Jordan",
-  "Paraguay": "Paraguay",
-  "Bolivia": "Bolivia",
-  "Bahrain": "Bahrain",
-  "Cambodia": "Cambodia",
-  "Latvia": "Latvia",
-  "Estonia": "Estonia",
-  "Cyprus": "Cyprus",
-  "Iceland": "Iceland",
-  "Malta": "Malta",
-  "Mongolia": "Mongolia",
-  "Thailand": "Thailand",
-  "Taiwan": "Taiwan",
+  Lithuania: "Lithuania",
+  Serbia: "Serbia",
+  Slovenia: "Slovenia",
+  Tunisia: "Tunisia",
+  Jordan: "Jordan",
+  Paraguay: "Paraguay",
+  Bolivia: "Bolivia",
+  Bahrain: "Bahrain",
+  Cambodia: "Cambodia",
+  Latvia: "Latvia",
+  Estonia: "Estonia",
+  Cyprus: "Cyprus",
+  Iceland: "Iceland",
+  Malta: "Malta",
+  Mongolia: "Mongolia",
+  Thailand: "Thailand",
+  Taiwan: "Taiwan",
   "Hong Kong": "Hong Kong",
-  "Russia": "Russia",
+  Russia: "Russia",
   "Russian Federation": "Russia",
-  "Ukraine": "Ukraine",
-  "Spain": "Spain",
-  "Italy": "Italy",
+  Ukraine: "Ukraine",
+  Spain: "Spain",
+  Italy: "Italy",
 };
 
 export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   const [tooltipContent, setTooltipContent] = useState("");
 
-  const normalizeCountryName = (geoName: string): string => {
+  const normaliseCountryName = (geoName: string): string => {
     return COUNTRY_NAME_MAP[geoName] || geoName;
   };
 
   const getCountryData = (geoName: string) => {
-    const normalizedName = normalizeCountryName(geoName);
+    const normalisedName = normaliseCountryName(geoName);
     return countries.find(
-      (c) => c.name.toLowerCase() === normalizedName.toLowerCase()
+      (c) => c.name.toLowerCase() === normalisedName.toLowerCase()
     );
   };
 
   const getTradeAgreements = (countryName: string) => {
-    const normalizedName = normalizeCountryName(countryName);
+    const normalizedName = normaliseCountryName(countryName);
     return tradeAgreements.filter(
       (ta) =>
         ta.countryA.toLowerCase() === normalizedName.toLowerCase() ||
@@ -161,7 +157,9 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
       let content = `<div class="p-2">
         <div class="font-bold text-lg mb-2">${countryData.name}</div>
         <div class="text-sm mb-1">
-          <span class="font-medium">Base Tariff Rate:</span> ${countryData.tariffRate.toFixed(1)}%
+          <span class="font-medium">Base Tariff Rate:</span> ${countryData.tariffRate.toFixed(
+            1
+          )}%
         </div>`;
 
       if (agreements.length > 0) {
@@ -171,7 +169,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
             agreement.countryA.toLowerCase() === countryData.name.toLowerCase()
               ? agreement.countryB
               : agreement.countryA;
-          
+
           if (!acc[partner]) {
             acc[partner] = [];
           }
@@ -182,26 +180,30 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
         const partnerCount = Object.keys(groupedAgreements).length;
 
         content += `<div class="mt-3 pt-2 border-t border-gray-300 dark:border-gray-600">
-          <div class="font-medium text-sm mb-2">Active Trade Agreements (${partnerCount} ${partnerCount === 1 ? 'partner' : 'partners'})</div>
+          <div class="font-medium text-sm mb-2">Active Trade Agreements (${partnerCount} ${
+          partnerCount === 1 ? "partner" : "partners"
+        })</div>
           <div class="space-y-2 max-h-40 overflow-y-auto">`;
 
         const partners = Object.entries(groupedAgreements).slice(0, 5);
         partners.forEach(([partner, partnerAgreements]) => {
           content += `<div class="text-xs border-b border-gray-200 dark:border-gray-700 pb-1 mb-1">
             <div class="font-medium text-gray-900 dark:text-gray-100">${partner}</div>`;
-          
+
           partnerAgreements.slice(0, 3).forEach((agreement) => {
             content += `<div class="ml-2 text-gray-600 dark:text-gray-400">
-              • HS ${agreement.hsCode}: ${agreement.rate.toFixed(1)}% (${agreement.tariffType})
+              • HS ${agreement.hsCode}: ${agreement.rate.toFixed(1)}% (${
+              agreement.tariffType
+            })
             </div>`;
           });
-          
+
           if (partnerAgreements.length > 3) {
             content += `<div class="ml-2 text-xs italic text-gray-500">
               +${partnerAgreements.length - 3} more agreements...
             </div>`;
           }
-          
+
           content += `</div>`;
         });
 
