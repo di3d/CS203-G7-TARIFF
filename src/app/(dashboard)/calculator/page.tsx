@@ -57,8 +57,8 @@ export default function CalculatorPage() {
     const fetchData = async () => {
       try {
         const [hsCodesResponse, countriesResponse] = await Promise.all([
-          axios.get("http://localhost:8080/hscodes"),
-          axios.get("http://localhost:8080/countries"),
+          axios.get("http://localhost:8080/api/hscodes"),
+          axios.get("http://localhost:8080/api/countries"),
         ]);
         setCommodities(hsCodesResponse.data);
         setCountries(countriesResponse.data);
