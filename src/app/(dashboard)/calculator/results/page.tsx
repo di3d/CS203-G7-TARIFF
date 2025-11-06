@@ -58,14 +58,14 @@ export default function ResultsPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CalculationResult | null>(null);
 
-  // Currency conversion state (hooks must be unconditional)
+  // Currency conversion state
   const [selectedCurrency, setSelectedCurrency] = useState<string>("");
   const [convertedAmount, setConvertedAmount] = useState<number | null>(null);
   const [conversionRate, setConversionRate] = useState<number | null>(null);
   const [conversionLoading, setConversionLoading] = useState(false);
   const [conversionError, setConversionError] = useState<string | null>(null);
 
-  // Available currencies (ensure original is included when available)
+  // Available currencies
   const availableCurrencies = Array.from(
     new Set([...(result ? [result.currency] : []), ...Object.keys(CURRENCY_SYMBOLS)])
   ).filter(Boolean);
@@ -76,7 +76,6 @@ export default function ResultsPage() {
         setLoading(true);
         setError(null);
 
-        // Get calculation result from sessionStorage
         const storedResult = sessionStorage.getItem("calculationResult");
 
         if (!storedResult) {
@@ -96,10 +95,8 @@ export default function ResultsPage() {
     };
 
     loadResult();
-    
   }, []);
 
-  // When `result` loads, initialize conversion state
   useEffect(() => {
     if (!result) return;
     setSelectedCurrency(result.currency);
@@ -108,6 +105,7 @@ export default function ResultsPage() {
     setConversionError(null);
   }, [result]);
 
+  // ✅ FIXED fetchConversion function
   const fetchConversion = async (toCurrency: string) => {
     if (!result) return;
     const originalCurrency = result.currency;
@@ -131,7 +129,11 @@ export default function ResultsPage() {
         amount: String(originalAmount),
       });
 
-      const res = await fetch(`/api/exchange?${params.toString()}`);
+      // ✅ Fixed: point to backend (port 8080), not Next.js (port 3000)
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/exchange?${params.toString()}`
+      );
+
       if (!res.ok) throw new Error(`API error: ${res.status}`);
 
       const payload = await res.json();
@@ -152,10 +154,8 @@ export default function ResultsPage() {
     }
   };
 
-  // Trigger conversion when selected currency changes
   useEffect(() => {
-    if (!selectedCurrency) return;
-    if (!result) return;
+    if (!selectedCurrency || !result) return;
     fetchConversion(selectedCurrency);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCurrency, result]);
@@ -286,7 +286,9 @@ export default function ResultsPage() {
               <p className="text-lg">
                 {result.baseTariff.toFixed(1)}%
                 {result.applicableTariff && (
-                  <span className="text-sm text-muted-foreground ml-2">(Default: {result.defaultRate.toFixed(1)}%)</span>
+                  <span className="text-sm text-muted-foreground ml-2">
+                    (Default: {result.defaultRate.toFixed(1)}%)
+                  </span>
                 )}
               </p>
             </div>
@@ -295,14 +297,19 @@ export default function ResultsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Effective Rate</p>
-              <p className="text-3xl font-bold text-primary text-red-600">{result.effectiveRate.toFixed(1)}%</p>
+              <p className="text-3xl font-bold text-primary text-red-600">
+                {result.effectiveRate.toFixed(1)}%
+              </p>
             </div>
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Total Duty</p>
               <div className="flex items-center gap-4">
                 <p className="text-3xl font-bold text-primary text-red-600">
                   {currencySymbol}
-                  {result.totalDuty.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {result.totalDuty.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </p>
 
                 <div className="w-40">
@@ -320,7 +327,7 @@ export default function ResultsPage() {
                   </Select>
                 </div>
 
-                {/* Converted value shown on the same row, right aligned */}
+                {/* Converted value */}
                 <div className="ml-auto text-right flex items-center justify-end gap-2">
                   {selectedCurrency && selectedCurrency !== result.currency ? (
                     <>
@@ -336,7 +343,10 @@ export default function ResultsPage() {
                         <div>
                           <p className="text-3xl font-bold text-muted-foreground">
                             {CURRENCY_SYMBOLS[selectedCurrency] || selectedCurrency}
-                            {convertedAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            {convertedAmount.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                           </p>
                         </div>
                       ) : null}
@@ -345,7 +355,6 @@ export default function ResultsPage() {
                 </div>
               </div>
 
-              {/* Rate shown on the next line, right aligned and cleaner */}
               {selectedCurrency && selectedCurrency !== result.currency && conversionRate != null && !conversionError && (
                 <div className="mt-2 text-sm text-muted-foreground text-right">
                   Rate: 1 {result.currency} = {conversionRate.toLocaleString(undefined, { maximumFractionDigits: 10 })} {selectedCurrency}
@@ -356,7 +365,11 @@ export default function ResultsPage() {
 
           {result.applicableTariff && (
             <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground">Special agreement valid from {new Date(result.applicableTariff.startDate).toLocaleDateString()} to {new Date(result.applicableTariff.endDate).toLocaleDateString()}</p>
+              <p className="text-sm text-muted-foreground">
+                Special agreement valid from{" "}
+                {new Date(result.applicableTariff.startDate).toLocaleDateString()} to{" "}
+                {new Date(result.applicableTariff.endDate).toLocaleDateString()}
+              </p>
             </div>
           )}
         </CardContent>
