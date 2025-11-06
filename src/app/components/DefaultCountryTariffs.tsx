@@ -18,7 +18,7 @@ const CountriesCRUD: React.FC = () => {
     tariffRate: 0,
   });
 
-  const API_URL = "http://localhost:8080/countries";
+  const API_URL = "http://localhost:8080/api/countries";
 
   useEffect(() => {
     fetchCountries();

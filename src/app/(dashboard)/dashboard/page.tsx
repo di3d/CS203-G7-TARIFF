@@ -34,7 +34,7 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         const [tariffsRes, countriesRes] = await Promise.all([
-          fetch("http://localhost:8080/api/trade-agreements"),
+          fetch("http://localhost:8080/api/trade-agreements/tariffs"),
           fetch("http://localhost:8080/api/countries"),
         ]);
 

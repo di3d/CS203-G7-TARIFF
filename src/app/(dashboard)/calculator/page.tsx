@@ -18,15 +18,15 @@ import { Calculator } from "lucide-react";
 
 // API data structure
 interface HSCode {
-  id: number;
-  code: string;
+  hsCode: string;
   description: string;
 }
 
 interface Country {
   id: number;
   name: string;
-  tariff_rate: number;
+  isoCode?: string;
+  region?: string;
 }
 
 // Currency options
@@ -57,8 +57,8 @@ export default function CalculatorPage() {
     const fetchData = async () => {
       try {
         const [hsCodesResponse, countriesResponse] = await Promise.all([
-          axios.get("http://localhost:8080/hscodes"),
-          axios.get("http://localhost:8080/countries"),
+          axios.get("http://localhost:8080/api/hscodes"),
+          axios.get("http://localhost:8080/api/countries"),
         ]);
         setCommodities(hsCodesResponse.data);
         setCountries(countriesResponse.data);
@@ -76,7 +76,7 @@ export default function CalculatorPage() {
     const { name, value } = e.target;
 
     if (name === "hsCode") {
-      const commodity = commodities.find((item) => item.code === value);
+      const commodity = commodities.find((item) => item.hsCode === value);
       setFormData((prev) => ({
         ...prev,
         [name]: value,
@@ -163,7 +163,7 @@ export default function CalculatorPage() {
                 />
                 <datalist id="hsCodes">
                   {commodities.map((item) => (
-                    <option key={item.id} value={item.code}>
+                    <option key={item.hsCode} value={item.hsCode}>
                       {item.description}
                     </option>
                   ))}

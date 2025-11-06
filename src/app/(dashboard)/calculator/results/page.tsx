@@ -96,6 +96,7 @@ export default function ResultsPage() {
     };
 
     loadResult();
+    
   }, []);
 
   // When `result` loads, initialize conversion state

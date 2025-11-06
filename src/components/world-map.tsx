@@ -157,9 +157,11 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
       let content = `<div class="p-2">
         <div class="font-bold text-lg mb-2">${countryData.name}</div>
         <div class="text-sm mb-1">
-          <span class="font-medium">Base Tariff Rate:</span> ${countryData.tariffRate.toFixed(
-            1
-          )}%
+          <span class="font-medium">Base Tariff Rate:</span> ${
+            countryData.tariffRate != null 
+              ? countryData.tariffRate.toFixed(1) + '%'
+              : 'N/A'
+          }
         </div>`;
 
       if (agreements.length > 0) {
@@ -238,8 +240,8 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     const geoName = geo.properties.name;
     const countryData = getCountryData(geoName);
 
-    if (!countryData) {
-      return "#E5E7EB"; // gray-200
+    if (!countryData || countryData.tariffRate == null) {
+      return "#E5E7EB"; // gray-200 - No data
     }
 
     // Color based on tariff rate
