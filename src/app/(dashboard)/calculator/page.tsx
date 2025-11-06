@@ -265,7 +265,7 @@ export default function CalculatorPage() {
             </div>
 
             <div className="flex justify-end">
-              <Button type="submit" size="lg">
+              <Button variant="default" size="lg">
                 Calculate Tariff
               </Button>
             </div>

@@ -179,7 +179,7 @@ export default function ResultsPage() {
           </CardHeader>
           <CardContent>
             <p className="mb-4">{error}</p>
-            <Button onClick={() => router.push("/calculator")} variant="outline">
+            <Button onClick={() => router.push("/calculator")} variant="default">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back to Calculator
             </Button>
@@ -197,7 +197,7 @@ export default function ResultsPage() {
             <CardTitle>No Results</CardTitle>
           </CardHeader>
           <CardContent>
-            <Button onClick={() => router.push("/calculator")} variant="outline">
+            <Button onClick={() => router.push("/calculator")} variant="default">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back to Calculator
             </Button>
@@ -216,7 +216,7 @@ export default function ResultsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Calculation Results</h1>
           <p className="text-muted-foreground">Your tariff calculation details</p>
         </div>
-        <Button onClick={() => router.push("/calculator")} variant="outline">
+        <Button onClick={() => router.push("/calculator")} variant="default">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
