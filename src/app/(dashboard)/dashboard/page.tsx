@@ -35,7 +35,7 @@ export default function DashboardPage() {
       try {
         const [tariffsRes, countriesRes] = await Promise.all([
           fetch("http://localhost:8080/api/trade-agreements"),
-          fetch("http://localhost:8080/countries"),
+          fetch("http://localhost:8080/api/countries"),
         ]);
 
         if (!tariffsRes.ok || !countriesRes.ok) {
