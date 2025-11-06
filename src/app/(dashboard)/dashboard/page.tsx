@@ -1,63 +1,108 @@
 // src/app/(dashboard)/dashboard/page.tsx
-"use client"
+"use client";
 import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertCircle, Globe } from "lucide-react";
+import { WorldMap } from "@/components/world-map";
+import { MapLegend } from "@/components/map-legend";
+import TradeAgreementsCard from "@/app/components/TradeAgreementsCard";
 
 type Tariff = {
   id: number;
+  countryA: string;
+  countryB: string;
   hsCode: string;
-  description: string;
   rate: number;
+  tariffType: string;
+  startDate: string;
+  endDate: string;
+};
+
+type Country = {
+  id: number;
+  name: string;
+  tariffRate: number;
 };
 
 export default function DashboardPage() {
   const [tariffs, setTariffs] = useState<Tariff[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:8080/tariffs")
-      .then(res => res.json())
-      .then(data => setTariffs(data));
+    const fetchData = async () => {
+      try {
+        const [tariffsRes, countriesRes] = await Promise.all([
+          fetch("http://localhost:8080/api/trade-agreements/tariffs"),
+          fetch("http://localhost:8080/api/countries"),
+        ]);
+
+        if (!tariffsRes.ok || !countriesRes.ok) {
+          throw new Error("Failed to fetch data");
+        }
+
+        const [tariffsData, countriesData] = await Promise.all([
+          tariffsRes.json(),
+          countriesRes.json(),
+        ]);
+
+        setTariffs(tariffsData);
+        setCountries(countriesData);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load data. Please check backend connection.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Dashboard</h1>
-      {/*yan's testing random sql stuff here, DONT DELETE*/}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-xl font-bold">Tariffs in Effect</h1>
-        <table className="min-w-full border  dark:border-gray-700 overflow-hidden">
-          <thead className="bg-gray-100 dark:bg-gray-800">
-            <tr>
-              <th className="px-4 py-2 text-left border-b  dark:border-gray-700 text-gray-700 dark:text-gray-200">
-                HS Code
-              </th>
-              <th className="px-4 py-2 text-left border-b  dark:border-gray-700 text-gray-700 dark:text-gray-200">
-                Description
-              </th>
-              <th className="px-4 py-2 text-left border-b  dark:border-gray-700 text-gray-700 dark:text-gray-200">
-                Rate (%)
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {tariffs.map((t) => (
-              <tr
-                key={t.id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                <td className="px-4 py-2 border-b  dark:border-gray-700 text-gray-900 dark:text-gray-100">
-                  {t.hsCode}
-                </td>
-                <td className="px-4 py-2 border-b  dark:border-gray-700 text-gray-900 dark:text-gray-100">
-                  {t.description}
-                </td>
-                <td className="px-4 py-2 border-b  dark:border-gray-700 text-gray-900 dark:text-gray-100">
-                  {t.rate}%
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Global tariff overview and trade agreements
+        </p>
       </div>
+
+      {/* TradeAgreements Table */}
+      <TradeAgreementsCard/>
+
+      {/* Interactive World Map */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            Global Tariff Map
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center h-96">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-4 w-4" />
+              <p>{error}</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <WorldMap countries={countries} tradeAgreements={tariffs} />
+              <MapLegend />
+              <p className="text-xs text-muted-foreground">
+                Hover over countries to view base tariff rates and active trade
+                agreements
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

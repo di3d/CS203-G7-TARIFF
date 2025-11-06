@@ -1,55 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Calculator } from "lucide-react";
 
-// Mock data
-const COMMODITIES = [
-  {
-    htsCode: "8471.30",
-    description: "Portable automatic data processing machines",
-  },
-  { htsCode: "8517.12", description: "Telephones for cellular networks" },
-  { htsCode: "8528.72", description: "Monitors and projectors" },
-  { htsCode: "8542.31", description: "Electronic integrated circuits" },
-  { htsCode: "9504.50", description: "Video game consoles and machines" },
+// API data structure
+interface HSCode {
+  hsCode: string;
+  description: string;
+}
+
+interface Country {
+  id: number;
+  name: string;
+  isoCode?: string;
+  region?: string;
+}
+
+// Currency options
+const CURRENCIES = [
+  { code: "USD", symbol: "$", name: "US Dollar" },
+  { code: "EUR", symbol: "€", name: "Euro" },
+  { code: "GBP", symbol: "£", name: "British Pound" },
+  { code: "JPY", symbol: "¥", name: "Japanese Yen" },
+  { code: "CNY", symbol: "¥", name: "Chinese Yuan" },
+  { code: "SGD", symbol: "S$", name: "Singapore Dollar" },
 ];
-
-const COUNTRIES = [
-  "Singapore 🇸🇬",
-  "United States 🇺🇸",
-  "China 🇨🇳",
-  "Germany 🇩🇪",
-  "Japan 🇯🇵",
-  "South Korea 🇰🇷",
-  "Vietnam 🇻🇳",
-  "Mexico 🇲🇽",
-  "Canada 🇨🇦",
-  "Taiwan 🇹🇼",
-  "Malaysia 🇲🇾",
-];
-
-const TRANSPORT_MODES = ["Air", "Sea", "Road", "Rail"];
 
 export default function CalculatorPage() {
   const router = useRouter();
+  const [commodities, setCommodities] = useState<HSCode[]>([]);
+  const [countries, setCountries] = useState<Country[]>([]);
   const [formData, setFormData] = useState({
-    htsCode: "",
+    hsCode: "",
     commodityDescription: "",
     shipmentValue: "1000",
     originCountry: "",
-    exportCountry: "",
-    transportMode: "",
+    importingCountry: "",
+    date: new Date().toISOString().split("T")[0],
+    currency: "USD",
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [hsCodesResponse, countriesResponse] = await Promise.all([
+          axios.get("http://localhost:8080/api/hscodes"),
+          axios.get("http://localhost:8080/api/countries"),
+        ]);
+        setCommodities(hsCodesResponse.data);
+        setCountries(countriesResponse.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
 
-    if (name === "htsCode") {
-      // Show commodity description for valid HTS code
-      const commodity = COMMODITIES.find((item) => item.htsCode === value);
+    if (name === "hsCode") {
+      const commodity = commodities.find((item) => item.hsCode === value);
       setFormData((prev) => ({
         ...prev,
         [name]: value,
@@ -60,174 +87,191 @@ export default function CalculatorPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate form
     if (
-      !formData.htsCode ||
+      !formData.hsCode ||
       !formData.shipmentValue ||
       !formData.originCountry ||
-      !formData.exportCountry ||
-      !formData.transportMode
+      !formData.importingCountry ||
+      !formData.date ||
+      !formData.currency
     ) {
       alert("Please fill in all required fields");
       return;
     }
 
-    // Navigate to results page with form parameters
-    const queryParams = new URLSearchParams();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value) queryParams.append(key, value);
-    });
+    try {
+      // Call the backend calculation API
+      const response = await axios.post("http://localhost:8080/api/calculate", {
+        hsCode: formData.hsCode,
+        commodityDescription: formData.commodityDescription,
+        shipmentValue: parseFloat(formData.shipmentValue),
+        originCountry: formData.originCountry,
+        importingCountry: formData.importingCountry,
+        date: formData.date,
+        currency: formData.currency,
+      });
 
-    router.push(`/calculator/results?${queryParams.toString()}`);
-  };
-
-  // Inline style for dropdown arrow
-  const dropdownArrowStyle = {
-    appearance: "none",
-    backgroundImage:
-      "url(\"data:image/svg+xml;charset=UTF-8,%3Csvg fill='none' stroke='%23666' stroke-width='2' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E\")",
-    backgroundRepeat: "no-repeat",
-    backgroundPosition: "right 0.75rem center",
-    backgroundSize: "1rem",
+      // Store the result in sessionStorage to pass to results page
+      sessionStorage.setItem("calculationResult", JSON.stringify(response.data));
+      
+      // Navigate to results page
+      router.push("/calculator/results");
+    } catch (error) {
+      console.error("Error calculating tariff:", error);
+      alert("Failed to calculate tariff. Please try again.");
+    }
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Tariff Calculator</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Tariff Calculator</h1>
+        <p className="text-muted-foreground">
+          Calculate tariffs and import duties
+        </p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* HTS code */}
-          <div className="md:col-span-2">
-            <label htmlFor="htsCode" className="block text-base font-bold text-gray-800 mb-1">
-              HTS Code
-            </label>
-            <input
-              type="text"
-              id="htsCode"
-              name="htsCode"
-              placeholder="8471.30"
-              value={formData.htsCode}
-              onChange={handleInputChange}
-              list="htsCodes"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <datalist id="htsCodes">
-              {COMMODITIES.map((item) => (
-                <option key={item.htsCode} value={item.htsCode}>
-                  {item.description}
-                </option>
-              ))}
-            </datalist>
-            {formData.commodityDescription && (
-              <p className="text-gray-700 mt-2">
-                Commodity Description: {formData.commodityDescription}
-              </p>
-            )}
-          </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calculator className="h-5 w-5" />
+            Calculate Tariff
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* HS Code */}
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="hsCode">HS Code</Label>
+                <Input
+                  type="text"
+                  id="hsCode"
+                  name="hsCode"
+                  placeholder="8471.30"
+                  value={formData.hsCode}
+                  onChange={handleInputChange}
+                  list="hsCodes"
+                  required
+                />
+                <datalist id="hsCodes">
+                  {commodities.map((item) => (
+                    <option key={item.hsCode} value={item.hsCode}>
+                      {item.description}
+                    </option>
+                  ))}
+                </datalist>
+                {formData.commodityDescription && (
+                  <p className="text-sm text-muted-foreground">
+                    {formData.commodityDescription}
+                  </p>
+                )}
+              </div>
 
-          {/* Shipment value */}
-          <div>
-            <label htmlFor="shipmentValue" className="block text-base font-bold text-gray-800 mb-1">
-              Shipment Value (USD)
-            </label>
-            <input
-              type="number"
-              id="shipmentValue"
-              name="shipmentValue"
-              value={formData.shipmentValue}
-              onChange={handleInputChange}
-              min="0"
-              step="1"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
+              {/* Shipment Value */}
+              <div className="space-y-2">
+                <Label htmlFor="shipmentValue">Shipment Value</Label>
+                <Input
+                  type="number"
+                  id="shipmentValue"
+                  name="shipmentValue"
+                  value={formData.shipmentValue}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="1"
+                  required
+                />
+              </div>
 
-          {/* Mode of transport */}
-          <div>
-            <label htmlFor="transportMode" className="block text-base font-bold text-gray-800 mb-1">
-              Mode of Transport
-            </label>
-            <select
-              id="transportMode"
-              name="transportMode"
-              value={formData.transportMode}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
-              style={dropdownArrowStyle}
-              required
-            >
-              <option value="">Select a mode</option>
-              {TRANSPORT_MODES.map((mode) => (
-                <option key={mode} value={mode}>
-                  {mode}
-                </option>
-              ))}
-            </select>
-          </div>
+              {/* Currency */}
+              <div className="space-y-2">
+                <Label htmlFor="currency">Currency</Label>
+                <Select
+                  value={formData.currency}
+                  onValueChange={(value) => handleSelectChange("currency", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((curr) => (
+                      <SelectItem key={curr.code} value={curr.code}>
+                        {curr.code} - {curr.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Origin country */}
-          <div>
-            <label htmlFor="originCountry" className="block text-base font-bold text-gray-800 mb-1">
-              Country of Origin
-            </label>
-            <select
-              id="originCountry"
-              name="originCountry"
-              value={formData.originCountry}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
-              style={dropdownArrowStyle}
-              required
-            >
-              <option value="">Select a country</option>
-              {COUNTRIES.map((country) => (
-                <option key={country} value={country}>
-                  {country}
-                </option>
-              ))}
-            </select>
-          </div>
+              {/* Country of Origin */}
+              <div className="space-y-2">
+                <Label htmlFor="originCountry">Country of Origin</Label>
+                <Select
+                  value={formData.originCountry}
+                  onValueChange={(value) => handleSelectChange("originCountry", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country.id} value={country.name}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Export country */}
-          <div>
-            <label htmlFor="exportCountry" className="block text-base font-bold text-gray-800 mb-1">
-              Country of Export
-            </label>
-            <select
-              id="exportCountry"
-              name="exportCountry"
-              value={formData.exportCountry}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
-              style={dropdownArrowStyle}
-              required
-            >
-              <option value="">Select a country</option>
-              {COUNTRIES.map((country) => (
-                <option key={country} value={country}>
-                  {country}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+              {/* Importing Country */}
+              <div className="space-y-2">
+                <Label htmlFor="importingCountry">Importing Country</Label>
+                <Select
+                  value={formData.importingCountry}
+                  onValueChange={(value) => handleSelectChange("importingCountry", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((country) => (
+                      <SelectItem key={country.id} value={country.name}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-        {/* Calculate */}
-        <div className="mt-8 flex justify-center">
-          <button
-            type="submit"
-            className="px-6 py-3 bg-blue-900 text-white font-medium rounded-md hover:bg-blue-950 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-          >
-            Calculate
-          </button>
-        </div>
-      </form>
+              {/* Date */}
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="date">Date</Label>
+                <Input
+                  type="date"
+                  id="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button variant="default" size="lg">
+                Calculate Tariff
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
