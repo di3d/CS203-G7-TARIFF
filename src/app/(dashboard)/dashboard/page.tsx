@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle, Globe } from "lucide-react";
 import { WorldMap } from "@/components/world-map";
 import { MapLegend } from "@/components/map-legend";
+import TradeAgreementsCard from "@/app/components/TradeAgreementsCard";
 
 type Tariff = {
   id: number;
@@ -33,7 +34,7 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         const [tariffsRes, countriesRes] = await Promise.all([
-          fetch("http://localhost:8080/tariffs"),
+          fetch("http://localhost:8080/api/trade-agreements"),
           fetch("http://localhost:8080/countries"),
         ]);
 
@@ -69,62 +70,8 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Tariffs Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Active Trade Agreements</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <div className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="h-4 w-4" />
-              <p>{error}</p>
-            </div>
-          ) : (
-            <div className="rounded-md border">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="px-4 py-3 text-left text-sm font-medium">
-                      Country A
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">
-                      Country B
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">
-                      HS Code
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">
-                      Rate (%)
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">
-                      Type
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tariffs.map((t, index) => (
-                    <tr
-                      key={`${t.countryA}-${t.countryB}-${t.hsCode}-${index}`}
-                      className="border-b last:border-0 hover:bg-muted/50 transition-colors"
-                    >
-                      <td className="px-4 py-3 text-sm">{t.countryA}</td>
-                      <td className="px-4 py-3 text-sm">{t.countryB}</td>
-                      <td className="px-4 py-3 text-sm font-mono">{t.hsCode}</td>
-                      <td className="px-4 py-3 text-sm">{t.rate}%</td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary">
-                          {t.tariffType}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* TradeAgreements Table */}
+      <TradeAgreementsCard/>
 
       {/* Interactive World Map */}
       <Card>
