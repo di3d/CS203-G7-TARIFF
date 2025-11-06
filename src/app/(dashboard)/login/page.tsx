@@ -27,9 +27,9 @@ export default function LoginPage() {
       );
 
       // ✅ Store backend-issued JWT & user info
-      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("token", res.data.idToken); // main JWT for auth/verification
+      localStorage.setItem("accessToken", res.data.accessToken); // optional, for API calls
       localStorage.setItem("role", res.data.role);
-      localStorage.setItem("userId", res.data.id);
 
       // Redirect based on role
       if (res.data.role === "Admin") {
