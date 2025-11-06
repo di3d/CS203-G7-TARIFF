@@ -1,21 +1,27 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Loader2, Globe, AlertCircle } from "lucide-react";
 
 interface Country {
-  id?: number;
+  countryId?: number;
   name: string;
-  tariffRate: number;
+  isoCode: string;
+  region: string;
 }
 
-const CountriesCRUD: React.FC = () => {
+export default function CountriesManager() {
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
   const [newCountry, setNewCountry] = useState<Country>({
     name: "",
-    tariffRate: 0,
+    isoCode: "",
+    region: "",
   });
 
   const API_URL = "http://localhost:8080/api/countries";
@@ -24,161 +30,233 @@ const CountriesCRUD: React.FC = () => {
     fetchCountries();
   }, []);
 
-  const fetchCountries = () => {
-    axios
-      .get<Country[]>(API_URL)
-      .then((res) => setCountries(res.data))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+  const fetchCountries = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error("Failed to fetch countries");
+      const data = await res.json();
+      setCountries(data);
+    } catch (err) {
+      setError("Unable to load countries");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreate = () => {
-    axios
-      .post(API_URL, newCountry)
-      .then(() => {
-        setNewCountry({ name: "", tariffRate: 0 });
-        fetchCountries();
-      })
-      .catch((err) => console.error(err));
+  const handleCreate = async () => {
+    try {
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newCountry),
+      });
+      setNewCountry({ name: "", isoCode: "", region: "" });
+      fetchCountries();
+    } catch {
+      setError("Failed to create country");
+    }
   };
 
-  const handleUpdate = (country: Country) => {
-    if (!country.id) return;
-    axios
-      .put(`${API_URL}/${country.id}`, country)
-      .then(() => {
-        setEditingId(null);
-        fetchCountries();
-      })
-      .catch((err) => console.error(err));
+  const handleUpdate = async (country: Country) => {
+    if (!country.countryId) return;
+    try {
+      await fetch(`${API_URL}/${country.countryId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(country),
+      });
+      setEditingId(null);
+      fetchCountries();
+    } catch {
+      setError("Failed to update country");
+    }
   };
 
-  const handleDelete = (id?: number) => {
+  const handleDelete = async (id?: number) => {
     if (!id) return;
-    axios
-      .delete(`${API_URL}/${id}`)
-      .then(() => fetchCountries())
-      .catch((err) => console.error(err));
+    try {
+      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      fetchCountries();
+    } catch {
+      setError("Failed to delete country");
+    }
   };
-
-  if (loading) return <p>Loading countries...</p>;
 
   return (
-    <div className="p-4 space-y-6">
-      {/* Create Form */}
-      <div className="flex space-x-2 items-center">
-        <input
-          type="text"
-          placeholder="Country name"
-          value={newCountry.name}
-          onChange={(e) => setNewCountry({ ...newCountry, name: e.target.value })}
-          className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-        />
-        <input
-          type="number"
-          placeholder="Tariff Rate"
-          value={newCountry.tariffRate}
-          onChange={(e) =>
-            setNewCountry({ ...newCountry, tariffRate: parseFloat(e.target.value) })
-          }
-          className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-        />
-        <button
-          onClick={handleCreate}
-          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Add Country
-        </button>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Globe className="h-5 w-5" />
+          Manage Countries
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex justify-center py-10 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+            Loading countries...
+          </div>
+        ) : error ? (
+          <div className="flex items-center gap-2 text-destructive py-4">
+            <AlertCircle className="h-4 w-4" />
+            <p>{error}</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Create form */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <Input
+                placeholder="Country name"
+                value={newCountry.name}
+                onChange={(e) =>
+                  setNewCountry({ ...newCountry, name: e.target.value })
+                }
+                className="max-w-[200px]"
+              />
+              <Input
+                placeholder="ISO code (e.g. SG)"
+                value={newCountry.isoCode}
+                onChange={(e) =>
+                  setNewCountry({ ...newCountry, isoCode: e.target.value })
+                }
+                className="max-w-[150px]"
+              />
+              <Input
+                placeholder="Region (e.g. Asia)"
+                value={newCountry.region}
+                onChange={(e) =>
+                  setNewCountry({ ...newCountry, region: e.target.value })
+                }
+                className="max-w-[200px]"
+              />
+              <Button onClick={handleCreate}>Add Country</Button>
+            </div>
 
-      {/* Table */}
-      <table className="min-w-full border border-gray-300">
-        <thead>
-          <tr className="bg-gray-900">
-            <th className="border px-4 py-2">ID</th>
-            <th className="border px-4 py-2">Name</th>
-            <th className="border px-4 py-2">Tariff Rate (%)</th>
-            <th className="border px-4 py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {countries.map((c) => (
-            <tr key={c.id}>
-              {editingId === c.id ? (
-                <>
-                  <td className="border px-4 py-2">{c.id}</td>
-                  <td className="border px-4 py-2">
-                    <input
-                      type="text"
-                      value={c.name}
-                      onChange={(e) =>
-                        setCountries((prev) =>
-                          prev.map((row) =>
-                            row.id === c.id ? { ...row, name: e.target.value } : row
-                          )
-                        )
-                      }
-                      className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-                    />
-                  </td>
-                  <td className="border px-4 py-2">
-                    <input
-                      type="number"
-                      value={c.tariffRate}
-                      onChange={(e) =>
-                        setCountries((prev) =>
-                          prev.map((row) =>
-                            row.id === c.id
-                              ? { ...row, tariffRate: parseFloat(e.target.value) }
-                              : row
-                          )
-                        )
-                      }
-                      className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-                    />
-                  </td>
-                  <td className="border px-4 py-2 space-x-2">
-                    <button
-                      onClick={() => handleUpdate(c)}
-                      className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+            {/* Table */}
+            <div className="rounded-md border overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-muted/50 border-b">
+                    <th className="text-left px-4 py-3 text-sm font-medium">
+                      ID
+                    </th>
+                    <th className="text-left px-4 py-3 text-sm font-medium">
+                      Name
+                    </th>
+                    <th className="text-left px-4 py-3 text-sm font-medium">
+                      ISO Code
+                    </th>
+                    <th className="text-left px-4 py-3 text-sm font-medium">
+                      Region
+                    </th>
+                    <th className="text-left px-4 py-3 text-sm font-medium">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {countries.map((c) => (
+                    <tr
+                      key={c.countryId}
+                      className="border-b last:border-0 hover:bg-muted/50 transition-colors"
                     >
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      className="px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
-                    >
-                      Cancel
-                    </button>
-                  </td>
-                </>
-              ) : (
-                <>
-                  <td className="border px-4 py-2">{c.id}</td>
-                  <td className="border px-4 py-2">{c.name}</td>
-                  <td className="border px-4 py-2">{c.tariffRate}</td>
-                  <td className="border px-4 py-2 space-x-2">
-                    <button
-                      onClick={() => setEditingId(c.id!)}
-                      className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(c.id)}
-                      className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                      {editingId === c.countryId ? (
+                        <>
+                          <td className="px-4 py-2">{c.countryId}</td>
+                          <td className="px-4 py-2">
+                            <Input
+                              value={c.name}
+                              onChange={(e) =>
+                                setCountries((prev) =>
+                                  prev.map((x) =>
+                                    x.countryId === c.countryId
+                                      ? { ...x, name: e.target.value }
+                                      : x
+                                  )
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Input
+                              value={c.isoCode}
+                              onChange={(e) =>
+                                setCountries((prev) =>
+                                  prev.map((x) =>
+                                    x.countryId === c.countryId
+                                      ? { ...x, isoCode: e.target.value }
+                                      : x
+                                  )
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Input
+                              value={c.region}
+                              onChange={(e) =>
+                                setCountries((prev) =>
+                                  prev.map((x) =>
+                                    x.countryId === c.countryId
+                                      ? { ...x, region: e.target.value }
+                                      : x
+                                  )
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-2 flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleUpdate(c)}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => setEditingId(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-4 py-2 text-sm">{c.countryId}</td>
+                          <td className="px-4 py-2 text-sm">{c.name}</td>
+                          <td className="px-4 py-2 text-sm font-mono">
+                            {c.isoCode}
+                          </td>
+                          <td className="px-4 py-2 text-sm">{c.region}</td>
+                          <td className="px-4 py-2 flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingId(c.countryId!)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDelete(c.countryId)}
+                            >
+                              Delete
+                            </Button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
-};
-
-export default CountriesCRUD;
+}

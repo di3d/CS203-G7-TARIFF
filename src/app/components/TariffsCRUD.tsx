@@ -1,341 +1,379 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Loader2, Globe2, AlertCircle } from "lucide-react";
 
 interface Tariff {
-  id?: number;
-  countryA: string;
-  countryB: string;
-  hsCode: string;
-  description: string;
-  rate: number;
-  tariffType: string;
-  startDate: string;
-  endDate: string;
+  tariffId?: number;
+  hsCode: { hsCode: string; description: string };
+  baseRate: number;
+  rateType: string;
+  effectiveDate: string;
+  expiryDate: string | null;
+  origins: string[];
+  destinations: string[];
 }
 
-const TariffsCRUD: React.FC = () => {
+export default function TariffsManager() {
   const [tariffs, setTariffs] = useState<Tariff[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [newTariff, setNewTariff] = useState<Tariff>({
-    countryA: "",
-    countryB: "",
-    hsCode: "",
-    description: "",
-    rate: 0,
-    tariffType: "",
-    startDate: "",
-    endDate: "",
+  const [newTariff, setNewTariff] = useState<Partial<Tariff>>({
+    hsCode: { hsCode: "", description: "" },
+    baseRate: 0,
+    rateType: "",
+    effectiveDate: "",
+    expiryDate: "",
+    origins: [],
+    destinations: [],
   });
 
-  const API_URL = "http://localhost:8080/tariffs";
+  const API_URL = "http://localhost:8080/api/tariffs";
 
   useEffect(() => {
     fetchTariffs();
   }, []);
 
-  const fetchTariffs = () => {
-    axios
-      .get<Tariff[]>(API_URL)
-      .then((res) => setTariffs(res.data))
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+  const fetchTariffs = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error("Failed to fetch tariffs");
+      const data = await res.json();
+      setTariffs(data);
+    } catch (err) {
+      setError("Unable to load tariffs");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCreate = () => {
-    axios
-      .post(API_URL, newTariff)
-      .then(() => {
-        setNewTariff({
-          countryA: "",
-          countryB: "",
-          hsCode: "",
-          description: "",
-          rate: 0,
-          tariffType: "",
-          startDate: "",
-          endDate: "",
-        });
-        fetchTariffs();
-      })
-      .catch((err) => console.error(err));
+  const handleCreate = async () => {
+    try {
+      await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newTariff),
+      });
+      setNewTariff({
+        hsCode: { hsCode: "", description: "" },
+        baseRate: 0,
+        rateType: "",
+        effectiveDate: "",
+        expiryDate: "",
+        origins: [],
+        destinations: [],
+      });
+      fetchTariffs();
+    } catch {
+      setError("Failed to create tariff");
+    }
   };
 
-  const handleUpdate = (tariff: Tariff) => {
-    if (!tariff.id) return;
-    axios
-      .put(`${API_URL}/${tariff.id}`, tariff)
-      .then(() => {
-        setEditingId(null);
-        fetchTariffs();
-      })
-      .catch((err) => console.error(err));
+  const handleUpdate = async (tariff: Tariff) => {
+    if (!tariff.tariffId) return;
+    try {
+      await fetch(`${API_URL}/${tariff.tariffId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(tariff),
+      });
+      setEditingId(null);
+      fetchTariffs();
+    } catch {
+      setError("Failed to update tariff");
+    }
   };
 
-  const handleDelete = (id?: number) => {
+  const handleDelete = async (id?: number) => {
     if (!id) return;
-    axios
-      .delete(`${API_URL}/${id}`)
-      .then(() => fetchTariffs())
-      .catch((err) => console.error(err));
+    try {
+      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      fetchTariffs();
+    } catch {
+      setError("Failed to delete tariff");
+    }
   };
-
-  if (loading) return <p>Loading tariffs...</p>;
 
   return (
-    <div className="p-4 space-y-6">
-      {/* Create Form */}
-      <div className="grid grid-cols-4 gap-2">
-        <input
-          type="text"
-          placeholder="Country A"
-          value={newTariff.countryA}
-          onChange={(e) => setNewTariff({ ...newTariff, countryA: e.target.value })}
-          className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-        />
-        <input
-          type="text"
-          placeholder="Country B"
-          value={newTariff.countryB}
-          onChange={(e) => setNewTariff({ ...newTariff, countryB: e.target.value })}
-          className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-        />
-        <input
-          type="text"
-          placeholder="HS Code"
-          value={newTariff.hsCode}
-          onChange={(e) => setNewTariff({ ...newTariff, hsCode: e.target.value })}
-          className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-        />
-        <input
-          type="text"
-          placeholder="Description"
-          value={newTariff.description}
-          onChange={(e) => setNewTariff({ ...newTariff, description: e.target.value })}
-          className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-        />
-        <input
-          type="number"
-          placeholder="Rate"
-          value={newTariff.rate}
-          onChange={(e) => setNewTariff({ ...newTariff, rate: parseFloat(e.target.value) })}
-          className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-        />
-        <input
-          type="text"
-          placeholder="Tariff Type"
-          value={newTariff.tariffType}
-          onChange={(e) => setNewTariff({ ...newTariff, tariffType: e.target.value })}
-          className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-        />
-        <input
-          type="date"
-          placeholder="Start Date"
-          value={newTariff.startDate}
-          onChange={(e) => setNewTariff({ ...newTariff, startDate: e.target.value })}
-          className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-        />
-        <input
-          type="date"
-          placeholder="End Date"
-          value={newTariff.endDate}
-          onChange={(e) => setNewTariff({ ...newTariff, endDate: e.target.value })}
-          className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-        />
-        <button
-          onClick={handleCreate}
-          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 col-span-4"
-        >
-          Add Tariff
-        </button>
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Globe2 className="h-5 w-5" />
+          Manage Tariffs
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex justify-center py-10 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+            Loading tariffs...
+          </div>
+        ) : error ? (
+          <div className="flex items-center gap-2 text-destructive py-4">
+            <AlertCircle className="h-4 w-4" />
+            <p>{error}</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Create Form */}
+            <div className="grid grid-cols-6 gap-2">
+              <Input
+                placeholder="HS Code"
+                value={newTariff.hsCode?.hsCode || ""}
+                onChange={(e) =>
+                  setNewTariff({
+                    ...newTariff,
+                    hsCode: { ...newTariff.hsCode!, hsCode: e.target.value },
+                  })
+                }
+              />
+              <Input
+                placeholder="Description"
+                value={newTariff.hsCode?.description || ""}
+                onChange={(e) =>
+                  setNewTariff({
+                    ...newTariff,
+                    hsCode: { ...newTariff.hsCode!, description: e.target.value },
+                  })
+                }
+              />
+              <Input
+                type="number"
+                placeholder="Base Rate (%)"
+                value={newTariff.baseRate || ""}
+                onChange={(e) =>
+                  setNewTariff({
+                    ...newTariff,
+                    baseRate: parseFloat(e.target.value),
+                  })
+                }
+              />
+              <Input
+                placeholder="Rate Type"
+                value={newTariff.rateType || ""}
+                onChange={(e) =>
+                  setNewTariff({ ...newTariff, rateType: e.target.value })
+                }
+              />
+              <Input
+                type="date"
+                value={newTariff.effectiveDate || ""}
+                onChange={(e) =>
+                  setNewTariff({ ...newTariff, effectiveDate: e.target.value })
+                }
+              />
+              <Input
+                type="date"
+                value={newTariff.expiryDate || ""}
+                onChange={(e) =>
+                  setNewTariff({ ...newTariff, expiryDate: e.target.value })
+                }
+              />
+              <Button
+                className="col-span-6 mt-2"
+                onClick={handleCreate}
+              >
+                Add Tariff
+              </Button>
+            </div>
 
-      {/* Table */}
-      <div className="overflow-auto">
-        <table className="min-w-full border border-gray-300">
-          <thead>
-            <tr className="bg-gray-900 text-white">
-              <th className="border px-4 py-2">ID</th>
-              <th className="border px-4 py-2">Country A</th>
-              <th className="border px-4 py-2">Country B</th>
-              <th className="border px-4 py-2">HS Code</th>
-              <th className="border px-4 py-2">Description</th>
-              <th className="border px-4 py-2">Rate (%)</th>
-              <th className="border px-4 py-2">Tariff Type</th>
-              <th className="border px-4 py-2">Start Date</th>
-              <th className="border px-4 py-2">End Date</th>
-              <th className="border px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tariffs.map((t) => (
-              <tr key={`${t.countryA}-${t.countryB}-${t.hsCode}`}>
-                {editingId === t.id ? (
-                  <>
-                    <td className="border px-4 py-2">{t.id}</td>
-                    <td className="border px-4 py-2">
-                      <input
-                        type="text"
-                        value={t.countryA}
-                        onChange={(e) =>
-                          setTariffs((prev) =>
-                            prev.map((row) =>
-                              row.id === t.id ? { ...row, countryA: e.target.value } : row
-                            )
-                          )
-                        }
-                        className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-                      />
-                    </td>
-                    <td className="border px-4 py-2">
-                      <input
-                        type="text"
-                        value={t.countryB}
-                        onChange={(e) =>
-                          setTariffs((prev) =>
-                            prev.map((row) =>
-                              row.id === t.id ? { ...row, countryB: e.target.value } : row
-                            )
-                          )
-                        }
-                        className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-                      />
-                    </td>
-                    <td className="border px-4 py-2">
-                      <input
-                        type="text"
-                        value={t.hsCode}
-                        onChange={(e) =>
-                          setTariffs((prev) =>
-                            prev.map((row) =>
-                              row.id === t.id ? { ...row, hsCode: e.target.value } : row
-                            )
-                          )
-                        }
-                        className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-                      />
-                    </td>
-                    <td className="border px-4 py-2">
-                      <input
-                        type="text"
-                        value={t.description}
-                        onChange={(e) =>
-                          setTariffs((prev) =>
-                            prev.map((row) =>
-                              row.id === t.id ? { ...row, description: e.target.value } : row
-                            )
-                          )
-                        }
-                        className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-                      />
-                    </td>
-                    <td className="border px-4 py-2">
-                      <input
-                        type="number"
-                        value={t.rate}
-                        onChange={(e) =>
-                          setTariffs((prev) =>
-                            prev.map((row) =>
-                              row.id === t.id ? { ...row, rate: parseFloat(e.target.value) } : row
-                            )
-                          )
-                        }
-                        className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-                      />
-                    </td>
-                    <td className="border px-4 py-2">
-                      <input
-                        type="text"
-                        value={t.tariffType}
-                        onChange={(e) =>
-                          setTariffs((prev) =>
-                            prev.map((row) =>
-                              row.id === t.id ? { ...row, tariffType: e.target.value } : row
-                            )
-                          )
-                        }
-                        className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-                      />
-                    </td>
-                    <td className="border px-4 py-2">
-                      <input
-                        type="date"
-                        value={t.startDate}
-                        onChange={(e) =>
-                          setTariffs((prev) =>
-                            prev.map((row) =>
-                              row.id === t.id ? { ...row, startDate: e.target.value } : row
-                            )
-                          )
-                        }
-                        className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-                      />
-                    </td>
-                    <td className="border px-4 py-2">
-                      <input
-                        type="date"
-                        value={t.endDate}
-                        onChange={(e) =>
-                          setTariffs((prev) =>
-                            prev.map((row) =>
-                              row.id === t.id ? { ...row, endDate: e.target.value } : row
-                            )
-                          )
-                        }
-                        className="px-2 py-1 border rounded dark:bg-gray-700 dark:border-gray-600"
-                      />
-                    </td>
-                    <td className="border px-4 py-2 space-x-2">
-                      <button
-                        onClick={() => handleUpdate(t)}
-                        className="px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={() => setEditingId(null)}
-                        className="px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
-                      >
-                        Cancel
-                      </button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td className="border px-4 py-2">{t.id}</td>
-                    <td className="border px-4 py-2">{t.countryA}</td>
-                    <td className="border px-4 py-2">{t.countryB}</td>
-                    <td className="border px-4 py-2">{t.hsCode}</td>
-                    <td className="border px-4 py-2">{t.description}</td>
-                    <td className="border px-4 py-2">{t.rate}</td>
-                    <td className="border px-4 py-2">{t.tariffType}</td>
-                    <td className="border px-4 py-2">{t.startDate}</td>
-                    <td className="border px-4 py-2">{t.endDate}</td>
-                    <td className="border px-4 py-2 space-x-2">
-                      <button
-                        onClick={() => setEditingId(t.id!)}
-                        className="px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(t.id)}
-                        className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+            {/* Tariffs Table */}
+            <div className="rounded-md border overflow-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-muted/50 border-b">
+                    <th className="px-4 py-3 text-left text-sm font-medium">ID</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">HS Code</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Description</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Rate (%)</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Type</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Effective</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Expiry</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Origins</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Destinations</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tariffs.map((t) => (
+                    <tr
+                      key={t.tariffId}
+                      className="border-b last:border-0 hover:bg-muted/50 transition-colors"
+                    >
+                      {editingId === t.tariffId ? (
+                        <>
+                          <td className="px-4 py-2">-</td>
+                          <td className="px-4 py-2">
+                            <Input
+                              value={t.hsCode.hsCode}
+                              onChange={(e) =>
+                                setTariffs((prev) =>
+                                  prev.map((x) =>
+                                    x.tariffId === t.tariffId
+                                      ? {
+                                          ...x,
+                                          hsCode: {
+                                            ...x.hsCode,
+                                            hsCode: e.target.value,
+                                          },
+                                        }
+                                      : x
+                                  )
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Input
+                              value={t.hsCode.description}
+                              onChange={(e) =>
+                                setTariffs((prev) =>
+                                  prev.map((x) =>
+                                    x.tariffId === t.tariffId
+                                      ? {
+                                          ...x,
+                                          hsCode: {
+                                            ...x.hsCode,
+                                            description: e.target.value,
+                                          },
+                                        }
+                                      : x
+                                  )
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Input
+                              type="number"
+                              value={t.baseRate}
+                              onChange={(e) =>
+                                setTariffs((prev) =>
+                                  prev.map((x) =>
+                                    x.tariffId === t.tariffId
+                                      ? {
+                                          ...x,
+                                          baseRate: parseFloat(e.target.value),
+                                        }
+                                      : x
+                                  )
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Input
+                              value={t.rateType}
+                              onChange={(e) =>
+                                setTariffs((prev) =>
+                                  prev.map((x) =>
+                                    x.tariffId === t.tariffId
+                                      ? { ...x, rateType: e.target.value }
+                                      : x
+                                  )
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Input
+                              type="date"
+                              value={t.effectiveDate}
+                              onChange={(e) =>
+                                setTariffs((prev) =>
+                                  prev.map((x) =>
+                                    x.tariffId === t.tariffId
+                                      ? { ...x, effectiveDate: e.target.value }
+                                      : x
+                                  )
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Input
+                              type="date"
+                              value={t.expiryDate || ""}
+                              onChange={(e) =>
+                                setTariffs((prev) =>
+                                  prev.map((x) =>
+                                    x.tariffId === t.tariffId
+                                      ? { ...x, expiryDate: e.target.value }
+                                      : x
+                                  )
+                                )
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-2 text-sm">
+                            {t.origins.join(", ")}
+                          </td>
+                          <td className="px-4 py-2 text-sm">
+                            {t.destinations.join(", ")}
+                          </td>
+                          <td className="px-4 py-2 flex gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => handleUpdate(t)}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => setEditingId(null)}
+                            >
+                              Cancel
+                            </Button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-4 py-2 text-sm">{t.tariffId}</td>
+                          <td className="px-4 py-2 text-sm font-mono">{t.hsCode.hsCode}</td>
+                          <td className="px-4 py-2 text-sm">{t.hsCode.description}</td>
+                          <td className="px-4 py-2 text-sm">{t.baseRate}</td>
+                          <td className="px-4 py-2 text-sm">{t.rateType}</td>
+                          <td className="px-4 py-2 text-sm">{t.effectiveDate}</td>
+                          <td className="px-4 py-2 text-sm">{t.expiryDate || "—"}</td>
+                          <td className="px-4 py-2 text-sm">
+                            -
+                          </td>
+                          <td className="px-4 py-2 text-sm">
+                            -
+                          </td>
+                          <td className="px-4 py-2 flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingId(t.tariffId!)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleDelete(t.tariffId)}
+                            >
+                              Delete
+                            </Button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
-};
-
-export default TariffsCRUD;
+}
