@@ -13,16 +13,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Backend response structure
 interface TariffAgreementDTO {
   id: number;
-  countryAId: number;
-  countryBId: number;
-  hscodeId: number;
-  rate: number;
-  tariffType: string;
-  startDate: string;
-  endDate: string;
+  tariffId: number;
+  agreementId: number;
+  agreementName: string;
+  preferentialRate: number;
+  rateType: string;
+  effectiveDate: string;
+  expiryDate: string | null;
 }
 
 interface CalculationResult {
@@ -278,7 +277,7 @@ export default function ResultsPage() {
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">Rate Type</p>
               <p className="text-lg">
-                {result.applicableTariff ? result.applicableTariff.tariffType : "Default Country Rate"}
+                {result.applicableTariff ? result.applicableTariff.rateType : "Default Country Rate"}
               </p>
             </div>
             <div>
@@ -366,9 +365,11 @@ export default function ResultsPage() {
           {result.applicableTariff && (
             <div className="pt-4 border-t">
               <p className="text-sm text-muted-foreground">
-                Special agreement valid from{" "}
-                {new Date(result.applicableTariff.startDate).toLocaleDateString()} to{" "}
-                {new Date(result.applicableTariff.endDate).toLocaleDateString()}
+                Special agreement ({result.applicableTariff.agreementName}) valid from{" "}
+                {new Date(result.applicableTariff.effectiveDate).toLocaleDateString()}
+                {result.applicableTariff.expiryDate && (
+                  <> to {new Date(result.applicableTariff.expiryDate).toLocaleDateString()}</>
+                )}
               </p>
             </div>
           )}
