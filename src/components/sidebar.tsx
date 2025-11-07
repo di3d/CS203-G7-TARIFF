@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Calculator, Home, LogOut, LogIn, User } from "lucide-react";
+import { Calculator, Home, Globe, LogOut, LogIn, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 import { Button } from "./ui/button";
@@ -18,6 +18,11 @@ const routes = [
 		label: "Calculator",
 		icon: Calculator,
 		href: "/calculator",
+	},
+	{
+		label: "Tariff Map",
+		icon: Globe,
+		href: "/map",
 	},
 ];
 

@@ -132,7 +132,7 @@ export default function CalculatorPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Tariff Calculator</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Calculator</h1>
         <p className="text-muted-foreground">
           Calculate tariffs and import duties
         </p>

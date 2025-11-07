@@ -33,7 +33,7 @@ export default function AdminPage() {
 
   // ✅ Only renders once authorized
   return (
-    <div>
+    <div className="space-y-6">
       <CountryDetails />
       <TariffsCRUD />
     </div>

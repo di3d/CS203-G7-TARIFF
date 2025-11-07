@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, Globe2, AlertCircle } from "lucide-react";
+import { Loader2, Cog, AlertCircle } from "lucide-react";
 
 interface Tariff {
   tariffId?: number;
@@ -103,7 +103,7 @@ export default function TariffsManager() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Globe2 className="h-5 w-5" />
+          <Cog className="h-5 w-5" />
           Manage Tariffs
         </CardTitle>
       </CardHeader>

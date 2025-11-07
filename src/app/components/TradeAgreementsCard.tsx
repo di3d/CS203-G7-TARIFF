@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, ScrollText, Loader2 } from "lucide-react";
 
 interface TradeAgreement {
   agreementId: number;
@@ -36,7 +36,10 @@ export default function TradeAgreementsCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Active Trade Agreements</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <ScrollText className="h-5 w-5"/>
+          Active Trade Agreements
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {loading ? (

@@ -1,10 +1,6 @@
 // src/app/(dashboard)/dashboard/page.tsx
 "use client";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Globe } from "lucide-react";
-import { WorldMap } from "@/components/world-map";
-import { MapLegend } from "@/components/map-legend";
 import TradeAgreementsCard from "@/app/components/TradeAgreementsCard";
 
 type Tariff = {
@@ -69,40 +65,7 @@ export default function DashboardPage() {
           Global tariff overview and trade agreements
         </p>
       </div>
-
-      {/* TradeAgreements Table */}
-      <TradeAgreementsCard/>
-
-      {/* Interactive World Map */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
-            Global Tariff Map
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center h-96">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          ) : error ? (
-            <div className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="h-4 w-4" />
-              <p>{error}</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              <WorldMap countries={countries} tradeAgreements={tariffs} />
-              <MapLegend />
-              <p className="text-xs text-muted-foreground">
-                Hover over countries to view base tariff rates and active trade
-                agreements
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <TradeAgreementsCard />
     </div>
   );
 }
