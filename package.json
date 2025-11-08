@@ -23,7 +23,8 @@
     "react-dom": "19.1.0",
     "react-simple-maps": "^3.0.0",
     "react-tooltip": "^5.26.3",
-    "tailwind-merge": "^2.2.0"
+    "tailwind-merge": "^2.2.0",
+    "world-countries": "^5.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
