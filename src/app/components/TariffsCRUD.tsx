@@ -91,13 +91,31 @@ export default function TariffsManager() {
 
   const handleDelete = async (id?: number) => {
     if (!id) return;
+    if (!confirm("Are you sure you want to delete this tariff?")) return;
     try {
-      await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
       fetchTariffs();
     } catch {
       setError("Failed to delete tariff");
     }
   };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "—";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "—";
+    return date.toLocaleString("en-SG", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const formatRate = (rate?: number) =>
+    rate !== undefined && rate !== null ? `${rate.toFixed(2)}%` : "—";
 
   return (
     <Card>
@@ -138,7 +156,10 @@ export default function TariffsManager() {
                 onChange={(e) =>
                   setNewTariff({
                     ...newTariff,
-                    hsCode: { ...newTariff.hsCode!, description: e.target.value },
+                    hsCode: {
+                      ...newTariff.hsCode!,
+                      description: e.target.value,
+                    },
                   })
                 }
               />
@@ -174,198 +195,115 @@ export default function TariffsManager() {
                   setNewTariff({ ...newTariff, expiryDate: e.target.value })
                 }
               />
-              <Button
-                className="col-span-6 mt-2"
-                onClick={handleCreate}
-              >
+              <Button className="col-span-6 mt-2" onClick={handleCreate}>
                 Add Tariff
               </Button>
             </div>
 
             {/* Tariffs Table */}
             <div className="rounded-md border overflow-auto">
-              <table className="w-full">
+              <table className="w-full text-xs">
                 <thead>
-                  <tr className="bg-muted/50 border-b">
-                    <th className="px-4 py-3 text-left text-sm font-medium">ID</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">HS Code</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Description</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Rate (%)</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Type</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Effective</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Expiry</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Origins</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Destinations</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                  <tr className="bg-muted/50 border-b text-[11px] text-muted-foreground uppercase tracking-wide">
+                    <th className="px-2.5 py-2 text-left font-medium w-[35px]">
+                      ID
+                    </th>
+                    <th className="px-2.5 py-2 text-left font-medium w-[60px]">
+                      HS
+                    </th>
+                    <th className="px-2.5 py-2 text-left font-medium">
+                      Description
+                    </th>
+                    <th className="px-2.5 py-2 text-left font-medium w-[55px]">
+                      Rate
+                    </th>
+                    <th className="px-2.5 py-2 text-left font-medium w-[70px]">
+                      Type
+                    </th>
+                    <th className="px-2.5 py-2 text-left font-medium w-[115px]">
+                      Effective
+                    </th>
+                    <th className="px-2.5 py-2 text-left font-medium w-[70px]">
+                      Expiry
+                    </th>
+                    <th className="px-2.5 py-2 text-left font-medium w-[80px]">
+                      Origin
+                    </th>
+                    <th className="px-2.5 py-2 text-left font-medium w-[95px]">
+                      Destination
+                    </th>
+                    <th className="px-2.5 py-2 text-center font-medium w-[80px]">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
+
                 <tbody>
                   {tariffs.map((t) => (
                     <tr
                       key={t.tariffId}
-                      className="border-b last:border-0 hover:bg-muted/50 transition-colors"
+                      className="border-b last:border-0 hover:bg-muted/40 transition-colors"
                     >
-                      {editingId === t.tariffId ? (
-                        <>
-                          <td className="px-4 py-2">-</td>
-                          <td className="px-4 py-2">
-                            <Input
-                              value={t.hsCode.hsCode}
-                              onChange={(e) =>
-                                setTariffs((prev) =>
-                                  prev.map((x) =>
-                                    x.tariffId === t.tariffId
-                                      ? {
-                                          ...x,
-                                          hsCode: {
-                                            ...x.hsCode,
-                                            hsCode: e.target.value,
-                                          },
-                                        }
-                                      : x
-                                  )
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Input
-                              value={t.hsCode.description}
-                              onChange={(e) =>
-                                setTariffs((prev) =>
-                                  prev.map((x) =>
-                                    x.tariffId === t.tariffId
-                                      ? {
-                                          ...x,
-                                          hsCode: {
-                                            ...x.hsCode,
-                                            description: e.target.value,
-                                          },
-                                        }
-                                      : x
-                                  )
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Input
-                              type="number"
-                              value={t.baseRate}
-                              onChange={(e) =>
-                                setTariffs((prev) =>
-                                  prev.map((x) =>
-                                    x.tariffId === t.tariffId
-                                      ? {
-                                          ...x,
-                                          baseRate: parseFloat(e.target.value),
-                                        }
-                                      : x
-                                  )
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Input
-                              value={t.rateType}
-                              onChange={(e) =>
-                                setTariffs((prev) =>
-                                  prev.map((x) =>
-                                    x.tariffId === t.tariffId
-                                      ? { ...x, rateType: e.target.value }
-                                      : x
-                                  )
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Input
-                              type="date"
-                              value={t.effectiveDate}
-                              onChange={(e) =>
-                                setTariffs((prev) =>
-                                  prev.map((x) =>
-                                    x.tariffId === t.tariffId
-                                      ? { ...x, effectiveDate: e.target.value }
-                                      : x
-                                  )
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Input
-                              type="date"
-                              value={t.expiryDate || ""}
-                              onChange={(e) =>
-                                setTariffs((prev) =>
-                                  prev.map((x) =>
-                                    x.tariffId === t.tariffId
-                                      ? { ...x, expiryDate: e.target.value }
-                                      : x
-                                  )
-                                )
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-2 text-sm">
-                            {t.origins.join(", ")}
-                          </td>
-                          <td className="px-4 py-2 text-sm">
-                            {t.destinations.join(", ")}
-                          </td>
-                          <td className="px-4 py-2 flex gap-2">
-                            <Button
-                              size="sm"
-                              className="bg-green-600 hover:bg-green-700"
-                              onClick={() => handleUpdate(t)}
-                            >
-                              Save
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => setEditingId(null)}
-                            >
-                              Cancel
-                            </Button>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td className="px-4 py-2 text-sm">{t.tariffId}</td>
-                          <td className="px-4 py-2 text-sm font-mono">{t.hsCode.hsCode}</td>
-                          <td className="px-4 py-2 text-sm">{t.hsCode.description}</td>
-                          <td className="px-4 py-2 text-sm">{t.baseRate}</td>
-                          <td className="px-4 py-2 text-sm">{t.rateType}</td>
-                          <td className="px-4 py-2 text-sm">{t.effectiveDate}</td>
-                          <td className="px-4 py-2 text-sm">{t.expiryDate || "—"}</td>
-                          <td className="px-4 py-2 text-sm">
-                            -
-                          </td>
-                          <td className="px-4 py-2 text-sm">
-                            -
-                          </td>
-                          <td className="px-4 py-2 flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setEditingId(t.tariffId!)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleDelete(t.tariffId)}
-                            >
-                              Delete
-                            </Button>
-                          </td>
-                        </>
-                      )}
+                      <td className="px-2.5 py-1.5">{t.tariffId}</td>
+                      <td className="px-2.5 py-1.5 font-mono text-[11px]">
+                        {t.hsCode.hsCode}
+                      </td>
+                      <td className="px-2.5 py-1.5 leading-snug max-w-[200px]">
+                        {t.hsCode.description}
+                      </td>
+                      <td className="px-2.5 py-1.5">
+                        {formatRate(t.baseRate)}
+                      </td>
+                      <td className="px-2.5 py-1.5">{t.rateType}</td>
+                      <td className="px-2.5 py-1.5 whitespace-nowrap">
+                        {formatDate(t.effectiveDate)}
+                      </td>
+                      <td className="px-2.5 py-1.5 whitespace-nowrap">
+                        {formatDate(t.expiryDate)}
+                      </td>
+                      <td className="px-2.5 py-1.5">
+                        {Array.isArray(t.origins) && t.origins.length > 0
+                          ? t.origins.join(", ")
+                          : "—"}
+                      </td>
+                      <td className="px-2.5 py-1.5">
+                        {Array.isArray(t.destinations) &&
+                        t.destinations.length > 0
+                          ? t.destinations.join(", ")
+                          : "—"}
+                      </td>
+                      <td className="px-2.5 py-1.5 text-center align-middle">
+                        <div className="flex justify-center items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-6 px-2 text-[11px]"
+                            onClick={() => {
+                              console.log("Editing ID:", t.tariffId);
+                              if (t.tariffId) setEditingId(t.tariffId);
+                              else
+                                alert(
+                                  "Tariff ID not found — check backend JSON field name."
+                                );
+                            }}
+                          >
+                            Edit
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-6 px-2 text-[11px]"
+                            onClick={() => {
+                              console.log("Deleting ID:", t.tariffId);
+                              if (t.tariffId) handleDelete(t.tariffId);
+                              else alert("Tariff ID missing — cannot delete.");
+                            }}
+                          >
+                            Del
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

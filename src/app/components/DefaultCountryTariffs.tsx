@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Globe2, AlertCircle } from "lucide-react";
 
 interface Country {
-  countryId?: number;
+  id: number;
   name: string;
   isoCode: string;
   region: string;
+  tariffRate?: number;
 }
 
 export default function CountriesManager() {
@@ -18,7 +19,8 @@ export default function CountriesManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [newCountry, setNewCountry] = useState<Country>({
+  const [editDraft, setEditDraft] = useState<Country | null>(null);
+  const [newCountry, setNewCountry] = useState({
     name: "",
     isoCode: "",
     region: "",
@@ -58,15 +60,26 @@ export default function CountriesManager() {
     }
   };
 
-  const handleUpdate = async (country: Country) => {
-    if (!country.countryId) return;
+  const handleEdit = (c: Country) => {
+    setEditingId(c.id);
+    setEditDraft({ ...c }); // take snapshot
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditDraft(null);
+  };
+
+  const handleUpdate = async () => {
+    if (!editDraft) return;
     try {
-      await fetch(`${API_URL}/${country.countryId}`, {
+      await fetch(`${API_URL}/${editDraft.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(country),
+        body: JSON.stringify(editDraft),
       });
       setEditingId(null);
+      setEditDraft(null);
       fetchCountries();
     } catch {
       setError("Failed to update country");
@@ -138,70 +151,50 @@ export default function CountriesManager() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-muted/50 border-b">
-                    <th className="text-left px-4 py-3 text-sm font-medium">
-                      ID
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium">
-                      Name
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium">
-                      ISO Code
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium">
-                      Region
-                    </th>
-                    <th className="text-left px-4 py-3 text-sm font-medium">
-                      Actions
-                    </th>
+                    <th className="text-left px-4 py-3 text-sm font-medium">ID</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium">Name</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium">ISO Code</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium">Region</th>
+                    <th className="text-left px-4 py-3 text-sm font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {countries.map((c) => (
                     <tr
-                      key={c.countryId}
+                      key={c.id}
                       className="border-b last:border-0 hover:bg-muted/50 transition-colors"
                     >
-                      {editingId === c.countryId ? (
+                      {editingId === c.id ? (
                         <>
-                          <td className="px-4 py-2">{c.countryId}</td>
+                          <td className="px-4 py-2">{c.id}</td>
                           <td className="px-4 py-2">
                             <Input
-                              value={c.name}
+                              value={editDraft?.name || ""}
                               onChange={(e) =>
-                                setCountries((prev) =>
-                                  prev.map((x) =>
-                                    x.countryId === c.countryId
-                                      ? { ...x, name: e.target.value }
-                                      : x
-                                  )
+                                setEditDraft((prev) =>
+                                  prev ? { ...prev, name: e.target.value } : prev
                                 )
                               }
                             />
                           </td>
                           <td className="px-4 py-2">
                             <Input
-                              value={c.isoCode}
+                              value={editDraft?.isoCode || ""}
                               onChange={(e) =>
-                                setCountries((prev) =>
-                                  prev.map((x) =>
-                                    x.countryId === c.countryId
-                                      ? { ...x, isoCode: e.target.value }
-                                      : x
-                                  )
+                                setEditDraft((prev) =>
+                                  prev
+                                    ? { ...prev, isoCode: e.target.value }
+                                    : prev
                                 )
                               }
                             />
                           </td>
                           <td className="px-4 py-2">
                             <Input
-                              value={c.region}
+                              value={editDraft?.region || ""}
                               onChange={(e) =>
-                                setCountries((prev) =>
-                                  prev.map((x) =>
-                                    x.countryId === c.countryId
-                                      ? { ...x, region: e.target.value }
-                                      : x
-                                  )
+                                setEditDraft((prev) =>
+                                  prev ? { ...prev, region: e.target.value } : prev
                                 )
                               }
                             />
@@ -209,15 +202,15 @@ export default function CountriesManager() {
                           <td className="px-4 py-2 flex gap-2">
                             <Button
                               size="sm"
-                              onClick={() => handleUpdate(c)}
                               className="bg-green-600 hover:bg-green-700"
+                              onClick={handleUpdate}
                             >
                               Save
                             </Button>
                             <Button
                               size="sm"
                               variant="secondary"
-                              onClick={() => setEditingId(null)}
+                              onClick={handleCancel}
                             >
                               Cancel
                             </Button>
@@ -225,24 +218,22 @@ export default function CountriesManager() {
                         </>
                       ) : (
                         <>
-                          <td className="px-4 py-2 text-sm">{c.countryId}</td>
+                          <td className="px-4 py-2 text-sm">{c.id}</td>
                           <td className="px-4 py-2 text-sm">{c.name}</td>
-                          <td className="px-4 py-2 text-sm font-mono">
-                            {c.isoCode}
-                          </td>
+                          <td className="px-4 py-2 text-sm font-mono">{c.isoCode}</td>
                           <td className="px-4 py-2 text-sm">{c.region}</td>
                           <td className="px-4 py-2 flex gap-2">
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => setEditingId(c.countryId!)}
+                              onClick={() => handleEdit(c)}
                             >
                               Edit
                             </Button>
                             <Button
                               size="sm"
                               variant="destructive"
-                              onClick={() => handleDelete(c.countryId)}
+                              onClick={() => handleDelete(c.id)}
                             >
                               Delete
                             </Button>
