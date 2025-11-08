@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { Tooltip } from "react-tooltip";
+import { CountryDetail } from "./country-detail";
 
 const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
@@ -18,6 +19,7 @@ interface TradeAgreement {
   hsCode: string;
   rate: number;
   tariffType: string;
+  agreementName: string;
 }
 
 interface WorldMapProps {
@@ -127,6 +129,11 @@ const COUNTRY_NAME_MAP: { [key: string]: string } = {
 
 export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   const [tooltipContent, setTooltipContent] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState<{
+    name: string;
+    tariffRate: number;
+    agreements: TradeAgreement[];
+  } | null>(null);
 
   const normaliseCountryName = (geoName: string): string => {
     return COUNTRY_NAME_MAP[geoName] || geoName;
@@ -154,7 +161,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     const agreements = getTradeAgreements(geoName);
 
     if (countryData) {
-      let content = `<div class="p-2">
+      let content = `<div class="p-3">
         <div class="font-bold text-lg mb-2">${countryData.name}</div>
         <div class="text-sm mb-1">
           <span class="font-medium">Base Tariff Rate:</span> ${
@@ -180,42 +187,51 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
         }, {} as { [key: string]: TradeAgreement[] });
 
         const partnerCount = Object.keys(groupedAgreements).length;
+        const totalAgreements = agreements.length;
+
+        // Calculate average preferential rate
+        const avgRate = (agreements.reduce((sum, a) => sum + a.rate, 0) / agreements.length).toFixed(1);
 
         content += `<div class="mt-3 pt-2 border-t border-gray-300 dark:border-gray-600">
-          <div class="font-medium text-sm mb-2">Active Trade Agreements (${partnerCount} ${
-          partnerCount === 1 ? "partner" : "partners"
-        })</div>
-          <div class="space-y-2 max-h-40 overflow-y-auto">`;
+          <div class="font-medium text-sm mb-1">Trade Agreements Summary</div>
+          <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
+            <div>• ${partnerCount} partner ${partnerCount === 1 ? "country" : "countries"}</div>
+            <div>• ${totalAgreements} total ${totalAgreements === 1 ? "agreement" : "agreements"}</div>
+            <div>• Avg. preferential rate: ${avgRate}%</div>
+          </div>`;
 
-        const partners = Object.entries(groupedAgreements).slice(0, 5);
-        partners.forEach(([partner, partnerAgreements]) => {
-          content += `<div class="text-xs border-b border-gray-200 dark:border-gray-700 pb-1 mb-1">
-            <div class="font-medium text-gray-900 dark:text-gray-100">${partner}</div>`;
+        // Show top 3 partners only
+        const topPartners = Object.entries(groupedAgreements)
+          .sort((a, b) => b[1].length - a[1].length)
+          .slice(0, 3);
 
-          partnerAgreements.slice(0, 3).forEach((agreement) => {
-            content += `<div class="ml-2 text-gray-600 dark:text-gray-400">
-              • HS ${agreement.hsCode}: ${agreement.rate.toFixed(1)}% (${
-              agreement.tariffType
-            })
-            </div>`;
-          });
+        content += `<div class="text-xs mt-2">
+          <div class="font-medium text-gray-700 dark:text-gray-300 mb-1">Top Partners:</div>`;
 
-          if (partnerAgreements.length > 3) {
-            content += `<div class="ml-2 text-xs italic text-gray-500">
-              +${partnerAgreements.length - 3} more agreements...
-            </div>`;
-          }
+        topPartners.forEach(([partner, partnerAgreements]) => {
+          // Calculate average rate for this partner
+          const partnerAvgRate = (
+            partnerAgreements.reduce((sum, a) => sum + a.rate, 0) / partnerAgreements.length
+          ).toFixed(1);
 
-          content += `</div>`;
+          content += `<div class="ml-2 mb-1">
+            <span class="font-medium text-gray-900 dark:text-gray-100">${partner}</span>
+            <span class="text-gray-600 dark:text-gray-400"> - ${partnerAgreements.length} ${
+            partnerAgreements.length === 1 ? "agreement" : "agreements"
+          }, avg: ${partnerAvgRate}%</span>
+          </div>`;
         });
 
-        if (partnerCount > 5) {
-          content += `<div class="text-xs italic text-gray-500 mt-1">
-            +${partnerCount - 5} more partners...
+        if (partnerCount > 3) {
+          content += `<div class="ml-2 text-xs italic text-gray-500 mt-1">
+            +${partnerCount - 3} more ${partnerCount - 3 === 1 ? "partner" : "partners"}
           </div>`;
         }
 
         content += `</div></div>`;
+        content += `<div class="text-xs text-gray-500 italic mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+          Click country for detailed breakdown
+        </div>`;
       } else {
         content += `<div class="text-xs text-gray-500 mt-2">
           No active trade agreements
@@ -225,7 +241,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
       content += `</div>`;
       setTooltipContent(content);
     } else {
-      setTooltipContent(`<div class="p-2">
+      setTooltipContent(`<div class="p-3">
         <div class="font-bold text-gray-900 dark:text-gray-100">${geoName}</div>
         <div class="text-xs text-gray-500">No tariff data available</div>
       </div>`);
@@ -234,6 +250,20 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
 
   const handleMouseLeave = () => {
     setTooltipContent("");
+  };
+
+  const handleCountryClick = (geo: any) => {
+    const geoName = geo.properties.name;
+    const countryData = getCountryData(geoName);
+    const agreements = getTradeAgreements(geoName);
+
+    if (countryData && agreements.length > 0) {
+      setSelectedCountry({
+        name: countryData.name,
+        tariffRate: countryData.tariffRate,
+        agreements,
+      });
+    }
   };
 
   const getFillColor = (geo: any) => {
@@ -280,6 +310,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
                   geography={geo}
                   onMouseEnter={() => handleMouseEnter(geo)}
                   onMouseLeave={handleMouseLeave}
+                  onClick={() => handleCountryClick(geo)}
                   style={{
                     default: {
                       fill: getFillColor(geo),
@@ -310,12 +341,21 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
       <Tooltip
         id="map-tooltip"
         place="top"
-        float
-        className="!bg-background !text-foreground !opacity-100 !shadow-lg !border !border-border !rounded-lg !z-50"
+        className="!bg-background !text-foreground !opacity-100 !shadow-lg !border !border-border !rounded-lg !z-50 !max-w-[400px]"
         style={{
-          maxWidth: "350px",
+          maxWidth: "400px",
         }}
+        float
+        positionStrategy="fixed"
       />
+      {selectedCountry && (
+        <CountryDetail
+          countryName={selectedCountry.name}
+          tariffRate={selectedCountry.tariffRate}
+          agreements={selectedCountry.agreements}
+          onClose={() => setSelectedCountry(null)}
+        />
+      )}
     </div>
   );
 }

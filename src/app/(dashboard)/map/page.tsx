@@ -89,8 +89,8 @@ export default function MapPage() {
               <WorldMap countries={countries} tradeAgreements={tariffs} />
               <MapLegend />
               <p className="text-xs text-muted-foreground">
-                Hover over countries to view base tariff rates and active trade
-                agreements
+                Hover over countries to view base tariff rates and trade agreement summaries. 
+                Click on a country for detailed breakdown of all agreements.
               </p>
             </div>
           )}
