@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import CountryDetails from "@/app/components/DefaultCountryTariffs";
 import TariffsCRUD from "@/app/components/TariffsCRUD";
+import {ManageCountry} from "@/app/components/ManageCountry";
 
 export default function AdminPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function AdminPage() {
   // ✅ Only renders once authorized
   return (
     <div className="space-y-6">
-      <CountryDetails />
+      <ManageCountry/>
       <TariffsCRUD />
     </div>
   );
