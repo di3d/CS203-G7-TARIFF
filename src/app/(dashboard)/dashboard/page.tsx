@@ -49,7 +49,7 @@ export default function DashboardPage() {
                 setError(null);
             } catch (err) {
                 console.error("Error fetching data:", err);
-                setError("Failed to load data. Please check backend connection.");
+                setError("Failed to load data from backend");
             } finally {
                 setLoading(false);
             }

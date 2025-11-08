@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Loader2, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, ChevronDown, ChevronRight, FileSearch } from "lucide-react";
 import React from "react";
 
 interface Country {
@@ -49,7 +49,10 @@ export function TariffViewer() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Tariff Lookup</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                    <FileSearch className="h-5 w-5" />
+                    Tariff Lookup
+                </CardTitle>
             </CardHeader>
 
             <CardContent className="space-y-4">
