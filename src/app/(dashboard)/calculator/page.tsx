@@ -13,13 +13,6 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Button } from "@/app/components/ui/button";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/app/components/ui/select";
-import {
     Command,
     CommandEmpty,
     CommandGroup,
@@ -59,6 +52,9 @@ export default function CalculatorPage() {
     const [commodities, setCommodities] = useState<HSCode[]>([]);
     const [countries, setCountries] = useState<Country[]>([]);
     const [openHS, setOpenHS] = useState(false);
+    const [openCurrency, setOpenCurrency] = useState(false);
+    const [openOrigin, setOpenOrigin] = useState(false);
+    const [openImporting, setOpenImporting] = useState(false);
 
     const [formData, setFormData] = useState({
         hsCode: "",
@@ -106,10 +102,23 @@ export default function CalculatorPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const { hsCode, shipmentValue, originCountry, importingCountry, date, currency } =
-            formData;
+        const {
+            hsCode,
+            shipmentValue,
+            originCountry,
+            importingCountry,
+            date,
+            currency,
+        } = formData;
 
-        if (!hsCode || !shipmentValue || !originCountry || !importingCountry || !date || !currency) {
+        if (
+            !hsCode ||
+            !shipmentValue ||
+            !originCountry ||
+            !importingCountry ||
+            !date ||
+            !currency
+        ) {
             alert("Please fill in all required fields");
             return;
         }
@@ -153,7 +162,7 @@ export default function CalculatorPage() {
                 <CardContent className="pt-6">
                     <form onSubmit={handleSubmit} className="space-y-8">
                         {/* HS Code Searchable Combobox */}
-                        <div className="space-y-2">
+                        <div>
                             <Label htmlFor="hsCode">HS Code</Label>
                             <Popover open={openHS} onOpenChange={setOpenHS}>
                                 <PopoverTrigger asChild>
@@ -161,20 +170,16 @@ export default function CalculatorPage() {
                                         variant="outline"
                                         role="combobox"
                                         className={cn(
-                                            "w-full justify-between h-11 text-left",
-                                            !formData.hsCode && "text-muted-foreground"
+                                            "bg-transparent",
+                                            "hover:bg-transparent",
+                                            "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                                            "w-full justify-between h-11 text-left font-normal",
+                                            !formData.hsCode
+                                                ? "text-muted-foreground hover:text-muted-foreground"
+                                                : "text-foreground hover:text-foreground"
                                         )}
                                     >
-                                        {formData.hsCode ? (
-                                            <div className="flex flex-col text-left">
-                                                <span className="font-medium">{formData.hsCode}</span>
-                                                <span className="text-xs text-muted-foreground truncate max-w-[260px]">
-                          {formData.commodityDescription}
-                        </span>
-                                            </div>
-                                        ) : (
-                                            "Select HS Code"
-                                        )}
+                                        {formData.hsCode || "Select HS Code"}
                                         <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
@@ -196,8 +201,8 @@ export default function CalculatorPage() {
                                                         <div className="flex flex-col text-left">
                                                             <span className="font-medium">{item.hsCode}</span>
                                                             <span className="text-xs text-muted-foreground">
-                                {item.description}
-                              </span>
+                                                                {item.description}
+                                                            </span>
                                                         </div>
                                                     </CommandItem>
                                                 ))}
@@ -206,12 +211,11 @@ export default function CalculatorPage() {
                                     </Command>
                                 </PopoverContent>
                             </Popover>
-
-                            {formData.commodityDescription && (
-                                <p className="text-sm text-muted-foreground pl-1">
+                            <div className="min-h-[20px] pl-1">
+                                <p className="text-sm text-muted-foreground">
                                     {formData.commodityDescription}
                                 </p>
-                            )}
+                            </div>
                         </div>
 
                         {/* Two-column grid */}
@@ -234,65 +238,156 @@ export default function CalculatorPage() {
                             {/* Currency */}
                             <div className="space-y-2">
                                 <Label htmlFor="currency">Currency</Label>
-                                <Select
-                                    value={formData.currency}
-                                    onValueChange={(value) => handleSelectChange("currency", value)}
-                                >
-                                    <SelectTrigger className="h-11">
-                                        <SelectValue placeholder="Select currency" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {CURRENCIES.map((curr) => (
-                                            <SelectItem key={curr.code} value={curr.code}>
-                                                {curr.code} — {curr.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Popover open={openCurrency} onOpenChange={setOpenCurrency}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className={cn(
+                                                "bg-transparent",
+                                                "hover:bg-transparent",
+                                                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                                                "w-full justify-between h-11 text-left font-normal",
+                                                !formData.currency
+                                                    ? "text-muted-foreground hover:text-muted-foreground"
+                                                    : "text-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            {formData.currency
+                                                ? CURRENCIES.find((c) => c.code === formData.currency)
+                                                    ?.code || "Select currency"
+                                                : "Select currency"}
+                                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[420px] p-0" align="start">
+                                        <Command>
+                                            <CommandInput placeholder="Search currencies..." />
+                                            <CommandList>
+                                                <CommandEmpty>No currencies found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {CURRENCIES.map((curr) => (
+                                                        <CommandItem
+                                                            key={curr.code}
+                                                            value={curr.code}
+                                                            onSelect={() => {
+                                                                handleSelectChange("currency", curr.code);
+                                                                setOpenCurrency(false);
+                                                            }}
+                                                        >
+                                                            <div className="flex flex-col text-left">
+                                                                <span className="font-medium">{curr.code}</span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {curr.name}
+                                                                </span>
+                                                            </div>
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
 
                             {/* Origin Country */}
                             <div className="space-y-2">
                                 <Label htmlFor="originCountry">Country of Origin</Label>
-                                <Select
-                                    value={formData.originCountry}
-                                    onValueChange={(value) =>
-                                        handleSelectChange("originCountry", value)
-                                    }
-                                >
-                                    <SelectTrigger className="h-11">
-                                        <SelectValue placeholder="Select country" />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-72">
-                                        {countries.map((country) => (
-                                            <SelectItem key={country.id} value={country.name}>
-                                                {country.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Popover open={openOrigin} onOpenChange={setOpenOrigin}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className={cn(
+                                                "bg-transparent",
+                                                "hover:bg-transparent",
+                                                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                                                "w-full justify-between h-11 text-left font-normal",
+                                                !formData.originCountry
+                                                    ? "text-muted-foreground hover:text-muted-foreground"
+                                                    : "text-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            {formData.originCountry || "Select country"}
+                                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[420px] p-0" align="start">
+                                        <Command>
+                                            <CommandInput placeholder="Search countries..." />
+                                            <CommandList>
+                                                <CommandEmpty>No countries found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {countries.map((country) => (
+                                                        <CommandItem
+                                                            key={country.id}
+                                                            value={country.name}
+                                                            onSelect={() => {
+                                                                handleSelectChange(
+                                                                    "originCountry",
+                                                                    country.name
+                                                                );
+                                                                setOpenOrigin(false);
+                                                            }}
+                                                        >
+                                                            {country.name}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
 
                             {/* Importing Country */}
                             <div className="space-y-2">
                                 <Label htmlFor="importingCountry">Importing Country</Label>
-                                <Select
-                                    value={formData.importingCountry}
-                                    onValueChange={(value) =>
-                                        handleSelectChange("importingCountry", value)
-                                    }
-                                >
-                                    <SelectTrigger className="h-11">
-                                        <SelectValue placeholder="Select country" />
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-72">
-                                        {countries.map((country) => (
-                                            <SelectItem key={country.id} value={country.name}>
-                                                {country.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <Popover open={openImporting} onOpenChange={setOpenImporting}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            role="combobox"
+                                            className={cn(
+                                                "bg-transparent",
+                                                "hover:bg-transparent",
+                                                "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                                                "w-full justify-between h-11 text-left font-normal",
+                                                !formData.importingCountry
+                                                    ? "text-muted-foreground hover:text-muted-foreground"
+                                                    : "text-foreground hover:text-foreground"
+                                            )}
+                                        >
+                                            {formData.importingCountry || "Select country"}
+                                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[420px] p-0" align="start">
+                                        <Command>
+                                            <CommandInput placeholder="Search countries..." />
+                                            <CommandList>
+                                                <CommandEmpty>No countries found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {countries.map((country) => (
+                                                        <CommandItem
+                                                            key={country.id}
+                                                            value={country.name}
+                                                            onSelect={() => {
+                                                                handleSelectChange(
+                                                                    "importingCountry",
+                                                                    country.name
+                                                                );
+                                                                setOpenImporting(false);
+                                                            }}
+                                                        >
+                                                            {country.name}
+                                                        </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                         </div>
 
