@@ -1,5 +1,3 @@
-Here’s a cleaned and fixed README. No emojis. License removed. Project tree corrected.
-
 ```markdown
 # Tarrific Frontend
 
@@ -31,6 +29,7 @@ Tarrific Frontend is a Next.js + TypeScript application that provides an interac
 ## Project Structure
 
 ```
+
 tarrific-frontend/
 ├── public/
 ├── src/
@@ -51,7 +50,6 @@ tarrific-frontend/
 ├── tailwind.config.ts
 ├── tsconfig.json
 └── README.md
-```
 
 ````
 
@@ -84,32 +82,32 @@ Then open [http://localhost:3000](http://localhost:3000).
 
 * All API requests go through `src/lib/api.ts`.
 * Imports use `@` alias mapped to `./src`.
-* ShadCN components live in `src/components/ui/`.
+* ShadCN components are stored in `src/components/ui/`.
 * HS code dropdowns and calculators are reactive.
 
 ---
 
 ## Scripts
 
-| Command         | Description            |
-| --------------- | ---------------------- |
-| `npm run dev`   | Start local dev server |
-| `npm run build` | Build for production   |
-| `npm start`     | Run built version      |
-| `npm run lint`  | Lint and fix code      |
+| Command         | Description                    |
+| --------------- | ------------------------------ |
+| `npm run dev`   | Start local development server |
+| `npm run build` | Build for production           |
+| `npm start`     | Run built version              |
+| `npm run lint`  | Lint and fix code              |
 
 ---
 
 ## Deployment
 
-Build and run:
+To build and deploy:
 
 ```bash
 npm run build
 npm start
 ```
 
-Docker:
+For Docker:
 
 ```bash
 docker build -t tarrific-frontend .
