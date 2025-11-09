@@ -1,7 +1,7 @@
 // src/app/(dashboard)/layout.tsx
 "use client";
 
-import { Sidebar } from "@/app/components/Map/sidebar";
+import { Sidebar } from "@/app/components/ui/sidebar";
 
 export default function DashboardLayout({
   children,

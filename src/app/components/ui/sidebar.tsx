@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Calculator, Home, Globe, LogOut, LogIn, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "./theme-toggle";
-import { Button } from "../ui/button";
+import { ThemeToggle } from "../Map/theme-toggle";
+import { Button } from "./button";
 import { useEffect, useState } from "react";
 
 const routes = [
