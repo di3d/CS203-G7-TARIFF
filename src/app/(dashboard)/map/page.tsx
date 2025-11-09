@@ -61,7 +61,7 @@ export default function MapPage() {
     }));
 
     return (
-        <div className="space-y-6">
+        <div className="flex flex-col h-[calc(100vh-6rem)] space-y-6">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Tariff Map</h1>
                 <p className="text-muted-foreground">
@@ -69,7 +69,7 @@ export default function MapPage() {
                 </p>
             </div>
 
-            <Card>
+            <Card className="flex-1 flex flex-col overflow-hidden">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <Globe className="h-5 w-5" />
@@ -77,9 +77,9 @@ export default function MapPage() {
                     </CardTitle>
                 </CardHeader>
 
-                <CardContent>
+                <CardContent className="flex-1 overflow-hidden">
                     {loading ? (
-                        <div className="flex items-center justify-center h-96">
+                        <div className="flex items-center justify-center h-full">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
                         </div>
                     ) : error ? (
@@ -88,11 +88,13 @@ export default function MapPage() {
                             <p>{error}</p>
                         </div>
                     ) : (
-                        <div className="space-y-6">
-                            <WorldMap
-                                countries={countries}
-                                tradeAgreements={formattedAgreements}
-                            />
+                        <div className="flex flex-col h-full space-y-4">
+                            <div className="flex-1 overflow-hidden">
+                                <WorldMap
+                                    countries={countries}
+                                    tradeAgreements={formattedAgreements}
+                                />
+                            </div>
                             <MapLegend />
                             <p className="text-xs text-muted-foreground">
                                 Hover over countries to view active trade summaries. Click a
