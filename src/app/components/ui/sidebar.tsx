@@ -10,6 +10,7 @@ import {
     LogOut,
     LogIn,
     User,
+    FileSearch,
 } from "lucide-react";
 import { Button } from "./button";
 import { ThemeToggle } from "../Map/theme-toggle";
@@ -19,36 +20,30 @@ const baseRoutes = [
     { label: "Dashboard", icon: Home, href: "/dashboard" },
     { label: "Calculator", icon: Calculator, href: "/calculator" },
     { label: "Tariff Map", icon: Globe, href: "/map" },
+    { label: "HS Codes", icon: FileSearch, href: "/hscodes" },
 ];
 
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
-
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [role, setRole] = useState<string | null>(null);
 
-    // --- Token and Role Detection ---
     useEffect(() => {
         const token = localStorage.getItem("token");
         setIsLoggedIn(Boolean(token));
-
         let foundRole = localStorage.getItem("role");
 
-        // Try to infer role from user JSON
         if (!foundRole) {
             const userJson = localStorage.getItem("user");
             if (userJson) {
                 try {
                     const user = JSON.parse(userJson);
                     if (user?.role) foundRole = String(user.role);
-                } catch {
-                    // ignore invalid JSON
-                }
+                } catch {}
             }
         }
 
-        // Try to infer role from JWT (idToken or accessToken)
         if (!foundRole) {
             const jwt = localStorage.getItem("idToken") || localStorage.getItem("accessToken");
             if (jwt) {
@@ -57,30 +52,24 @@ export function Sidebar() {
                     const base64 = payloadBase64?.replace(/-/g, "+").replace(/_/g, "/") ?? "";
                     const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
                     const claims = JSON.parse(atob(padded));
-
                     const groups = claims["cognito:groups"] || claims["groups"] || [];
                     const scope = claims["scope"] || "";
                     const roleClaim = claims["role"];
                     const realmRoles = claims["realm_access"]?.roles || [];
-
                     const allRoles = [
                         ...(Array.isArray(groups) ? groups : []),
                         ...(Array.isArray(realmRoles) ? realmRoles : []),
                         ...(typeof scope === "string" ? [scope] : []),
                         roleClaim ? [roleClaim] : [],
                     ].map((r) => String(r).toLowerCase());
-
                     if (allRoles.some((r) => r.includes("admin"))) foundRole = "Admin";
-                } catch {
-                    // ignore malformed JWTs
-                }
+                } catch {}
             }
         }
 
         setRole(foundRole ?? null);
     }, [pathname]);
 
-    // --- Auth Actions ---
     const handleAuth = () => {
         if (isLoggedIn) {
             localStorage.clear();
@@ -91,7 +80,6 @@ export function Sidebar() {
         }
     };
 
-    // --- Redirect Admins to dashboard on login ---
     useEffect(() => {
         if (
             isLoggedIn &&
@@ -102,7 +90,6 @@ export function Sidebar() {
         }
     }, [isLoggedIn, role, pathname, router]);
 
-    // --- Dynamic Routes ---
     const navRoutes = [
         ...baseRoutes,
         ...(isLoggedIn && role?.toLowerCase() === "admin"
@@ -110,17 +97,13 @@ export function Sidebar() {
             : []),
     ];
 
-    // --- Render ---
     return (
         <aside className="flex flex-col h-full bg-background border-r">
-            {/* Logo / Header */}
             <div className="px-3 py-4">
                 <Link href="/dashboard" className="flex items-center pl-3 mb-10">
                     <h1 className="text-2xl font-bold">Tarrific</h1>
                 </Link>
             </div>
-
-            {/* Navigation */}
             <nav className="flex-1 space-y-1 px-3">
                 {navRoutes.map(({ label, icon: Icon, href }) => {
                     const active = pathname === href;
@@ -141,14 +124,11 @@ export function Sidebar() {
                     );
                 })}
             </nav>
-
-            {/* Footer */}
             <div className="border-t border-border/50 p-3 space-y-2">
                 <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Theme</span>
                     <ThemeToggle />
                 </div>
-
                 <Button
                     onClick={handleAuth}
                     variant="ghost"
