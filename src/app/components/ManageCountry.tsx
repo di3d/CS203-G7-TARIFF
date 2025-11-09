@@ -13,6 +13,7 @@ import {
 import { Trash2, Plus, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import countries from "world-countries";
+import axios from "axios";
 
 interface Country {
     id?: number;
@@ -66,8 +67,8 @@ export function ManageCountry() {
         try {
             await api.delete(`/countries/${id}`);
             setCountriesData((prev) => prev.filter((c) => c.id !== id));
-        } catch (err: never) {
-            if (err.response?.status === 409) {
+        } catch (err: unknown) {
+            if (axios.isAxiosError(err) && err.response?.status === 409) {
                 alert(err.response.data);
             }
         }
@@ -122,7 +123,6 @@ export function ManageCountry() {
                         <th className="text-left px-4 py-2">Actions</th>
                     </tr>
                     </thead>
-
                     <tbody>
                     {countriesData.map((c) => (
                         <tr key={c.id} className="border-b last:border-0">

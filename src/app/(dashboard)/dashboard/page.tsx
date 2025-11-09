@@ -24,8 +24,8 @@ type Country = {
 };
 
 export default function DashboardPage() {
-    const [tariffs, setTariffs] = useState<Tariff[]>([]);
-    const [countries, setCountries] = useState<Country[]>([]);
+    const [,setTariffs] = useState<Tariff[]>([]);
+    const [,setCountries] = useState<Country[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
