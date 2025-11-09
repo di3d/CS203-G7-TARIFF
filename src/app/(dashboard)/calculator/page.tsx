@@ -3,7 +3,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Map/ui/card";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from "@/app/components/Map/ui/card";
 import { Input } from "@/app/components/Map/ui/input";
 import { Label } from "@/app/components/Map/ui/label";
 import { Button } from "@/app/components/Map/ui/button";
@@ -29,12 +34,12 @@ interface Country {
 }
 
 const CURRENCIES = [
-    { code: "USD", symbol: "$", name: "US Dollar" },
-    { code: "EUR", symbol: "€", name: "Euro" },
-    { code: "GBP", symbol: "£", name: "British Pound" },
-    { code: "JPY", symbol: "¥", name: "Japanese Yen" },
-    { code: "CNY", symbol: "¥", name: "Chinese Yuan" },
-    { code: "SGD", symbol: "S$", name: "Singapore Dollar" },
+    { code: "USD", name: "US Dollar" },
+    { code: "EUR", name: "Euro" },
+    { code: "GBP", name: "British Pound" },
+    { code: "JPY", name: "Japanese Yen" },
+    { code: "CNY", name: "Chinese Yuan" },
+    { code: "SGD", name: "Singapore Dollar" },
 ];
 
 export default function CalculatorPage() {
@@ -64,20 +69,15 @@ export default function CalculatorPage() {
                 console.error("Error fetching data:", err);
             }
         };
-
         fetchData();
     }, []);
 
-    const handleInputChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-    ) => {
-        const { name, value } = e.target;
-
+    const handleSelectChange = (name: string, value: string) => {
         if (name === "hsCode") {
-            const commodity = commodities.find((item) => item.hsCode === value);
+            const commodity = commodities.find((c) => c.hsCode === value);
             setFormData((prev) => ({
                 ...prev,
-                [name]: value,
+                hsCode: value,
                 commodityDescription: commodity ? commodity.description : "",
             }));
         } else {
@@ -85,34 +85,30 @@ export default function CalculatorPage() {
         }
     };
 
-    const handleSelectChange = (name: string, value: string) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        const { hsCode, shipmentValue, originCountry, importingCountry, date, currency } =
+            formData;
 
-        if (
-            !formData.hsCode ||
-            !formData.shipmentValue ||
-            !formData.originCountry ||
-            !formData.importingCountry ||
-            !formData.date ||
-            !formData.currency
-        ) {
+        if (!hsCode || !shipmentValue || !originCountry || !importingCountry || !date || !currency) {
             alert("Please fill in all required fields");
             return;
         }
 
         try {
             const res = await api.post("/calculate", {
-                hsCode: formData.hsCode,
+                hsCode,
                 commodityDescription: formData.commodityDescription,
-                shipmentValue: parseFloat(formData.shipmentValue),
-                originCountry: formData.originCountry,
-                importingCountry: formData.importingCountry,
-                date: formData.date,
-                currency: formData.currency,
+                shipmentValue: parseFloat(shipmentValue),
+                originCountry,
+                importingCountry,
+                date,
+                currency,
             });
 
             sessionStorage.setItem("calculationResult", JSON.stringify(res.data));
@@ -124,7 +120,7 @@ export default function CalculatorPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Calculator</h1>
                 <p className="text-muted-foreground">
@@ -132,43 +128,51 @@ export default function CalculatorPage() {
                 </p>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Calculator className="h-5 w-5" />
+            <Card className="border-border/50 shadow-sm">
+                <CardHeader className="border-b border-border/50 pb-4">
+                    <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+                        <Calculator className="h-5 w-5 text-primary" />
                         Calculate Tariff
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {/* HS Code */}
-                            <div className="md:col-span-2 space-y-2">
-                                <Label htmlFor="hsCode">HS Code</Label>
-                                <Input
-                                    type="text"
-                                    id="hsCode"
-                                    name="hsCode"
-                                    placeholder="8471.30"
-                                    value={formData.hsCode}
-                                    onChange={handleInputChange}
-                                    list="hsCodes"
-                                    required
-                                />
-                                <datalist id="hsCodes">
-                                    {commodities.map((item) => (
-                                        <option key={item.hsCode} value={item.hsCode}>
-                                            {item.description}
-                                        </option>
-                                    ))}
-                                </datalist>
-                                {formData.commodityDescription && (
-                                    <p className="text-sm text-muted-foreground">
-                                        {formData.commodityDescription}
-                                    </p>
-                                )}
-                            </div>
 
+                <CardContent className="pt-6">
+                    <form onSubmit={handleSubmit} className="space-y-8">
+                        {/* HS Code */}
+                        <div className="space-y-2">
+                            <Label htmlFor="hsCode">HS Code</Label>
+                            <Select
+                                value={formData.hsCode}
+                                onValueChange={(value) => handleSelectChange("hsCode", value)}
+                            >
+                                <SelectTrigger className="h-11 justify-between">
+                                    <SelectValue
+                                        placeholder="Select an HS Code"
+                                        className="text-left"
+                                    />
+                                </SelectTrigger>
+                                <SelectContent className="max-h-72">
+                                    {commodities.map((item) => (
+                                        <SelectItem key={item.hsCode} value={item.hsCode}>
+                                            <div className="flex flex-col text-left">
+                                                <span className="font-medium">{item.hsCode}</span>
+                                                <span className="text-xs text-muted-foreground">
+                          {item.description}
+                        </span>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {formData.commodityDescription && (
+                                <p className="text-sm text-muted-foreground pl-1">
+                                    {formData.commodityDescription}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Two-column grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Shipment Value */}
                             <div className="space-y-2">
                                 <Label htmlFor="shipmentValue">Shipment Value</Label>
@@ -179,7 +183,7 @@ export default function CalculatorPage() {
                                     value={formData.shipmentValue}
                                     onChange={handleInputChange}
                                     min="0"
-                                    step="1"
+                                    className="h-11"
                                     required
                                 />
                             </div>
@@ -189,24 +193,22 @@ export default function CalculatorPage() {
                                 <Label htmlFor="currency">Currency</Label>
                                 <Select
                                     value={formData.currency}
-                                    onValueChange={(value) =>
-                                        handleSelectChange("currency", value)
-                                    }
+                                    onValueChange={(value) => handleSelectChange("currency", value)}
                                 >
-                                    <SelectTrigger>
+                                    <SelectTrigger className="h-11">
                                         <SelectValue placeholder="Select currency" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {CURRENCIES.map((curr) => (
                                             <SelectItem key={curr.code} value={curr.code}>
-                                                {curr.code} - {curr.name}
+                                                {curr.code} — {curr.name}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </div>
 
-                            {/* Country of Origin */}
+                            {/* Origin Country */}
                             <div className="space-y-2">
                                 <Label htmlFor="originCountry">Country of Origin</Label>
                                 <Select
@@ -215,10 +217,10 @@ export default function CalculatorPage() {
                                         handleSelectChange("originCountry", value)
                                     }
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a country" />
+                                    <SelectTrigger className="h-11">
+                                        <SelectValue placeholder="Select country" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-72">
                                         {countries.map((country) => (
                                             <SelectItem key={country.id} value={country.name}>
                                                 {country.name}
@@ -237,10 +239,10 @@ export default function CalculatorPage() {
                                         handleSelectChange("importingCountry", value)
                                     }
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a country" />
+                                    <SelectTrigger className="h-11">
+                                        <SelectValue placeholder="Select country" />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-72">
                                         {countries.map((country) => (
                                             <SelectItem key={country.id} value={country.name}>
                                                 {country.name}
@@ -249,23 +251,24 @@ export default function CalculatorPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
 
-                            {/* Date */}
-                            <div className="md:col-span-2 space-y-2">
-                                <Label htmlFor="date">Date</Label>
-                                <Input
-                                    type="date"
-                                    id="date"
-                                    name="date"
-                                    value={formData.date}
-                                    onChange={handleInputChange}
-                                    required
-                                />
-                            </div>
+                        {/* Date */}
+                        <div className="space-y-2">
+                            <Label htmlFor="date">Date</Label>
+                            <Input
+                                type="date"
+                                id="date"
+                                name="date"
+                                value={formData.date}
+                                onChange={handleInputChange}
+                                className="h-11"
+                                required
+                            />
                         </div>
 
                         <div className="flex justify-end">
-                            <Button variant="default" size="lg">
+                            <Button size="lg" className="px-8">
                                 Calculate Tariff
                             </Button>
                         </div>
