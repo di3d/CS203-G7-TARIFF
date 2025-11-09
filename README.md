@@ -112,5 +112,3 @@ For Docker:
 docker build -t tarrific-frontend .
 docker run -p 3000:3000 tarrific-frontend
 ```
-
-```
