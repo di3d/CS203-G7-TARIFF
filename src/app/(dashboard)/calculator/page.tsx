@@ -8,18 +8,32 @@ import {
     CardContent,
     CardHeader,
     CardTitle,
-} from "@/app/components/Map/ui/card";
-import { Input } from "@/app/components/Map/ui/input";
-import { Label } from "@/app/components/Map/ui/label";
-import { Button } from "@/app/components/Map/ui/button";
+} from "@/app/components/ui/card";
+import { Input } from "@/app/components/ui/input";
+import { Label } from "@/app/components/ui/label";
+import { Button } from "@/app/components/ui/button";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/app/components/Map/ui/select";
-import { Calculator } from "lucide-react";
+} from "@/app/components/ui/select";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/app/components/ui/command";
+import {
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+} from "@/app/components/ui/popover";
+import { Calculator, Search } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface HSCode {
     hsCode: string;
@@ -29,8 +43,6 @@ interface HSCode {
 interface Country {
     id: number;
     name: string;
-    isoCode?: string;
-    region?: string;
 }
 
 const CURRENCIES = [
@@ -46,6 +58,8 @@ export default function CalculatorPage() {
     const router = useRouter();
     const [commodities, setCommodities] = useState<HSCode[]>([]);
     const [countries, setCountries] = useState<Country[]>([]);
+    const [openHS, setOpenHS] = useState(false);
+
     const [formData, setFormData] = useState({
         hsCode: "",
         commodityDescription: "",
@@ -138,32 +152,61 @@ export default function CalculatorPage() {
 
                 <CardContent className="pt-6">
                     <form onSubmit={handleSubmit} className="space-y-8">
-                        {/* HS Code */}
+                        {/* HS Code Searchable Combobox */}
                         <div className="space-y-2">
                             <Label htmlFor="hsCode">HS Code</Label>
-                            <Select
-                                value={formData.hsCode}
-                                onValueChange={(value) => handleSelectChange("hsCode", value)}
-                            >
-                                <SelectTrigger className="h-11 justify-between">
-                                    <SelectValue
-                                        placeholder="Select an HS Code"
-                                        className="text-left"
-                                    />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-72">
-                                    {commodities.map((item) => (
-                                        <SelectItem key={item.hsCode} value={item.hsCode}>
+                            <Popover open={openHS} onOpenChange={setOpenHS}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        className={cn(
+                                            "w-full justify-between h-11 text-left",
+                                            !formData.hsCode && "text-muted-foreground"
+                                        )}
+                                    >
+                                        {formData.hsCode ? (
                                             <div className="flex flex-col text-left">
-                                                <span className="font-medium">{item.hsCode}</span>
-                                                <span className="text-xs text-muted-foreground">
-                          {item.description}
+                                                <span className="font-medium">{formData.hsCode}</span>
+                                                <span className="text-xs text-muted-foreground truncate max-w-[260px]">
+                          {formData.commodityDescription}
                         </span>
                                             </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                        ) : (
+                                            "Select HS Code"
+                                        )}
+                                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[420px] p-0" align="start">
+                                    <Command>
+                                        <CommandInput placeholder="Search HS codes..." />
+                                        <CommandList>
+                                            <CommandEmpty>No HS codes found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {commodities.map((item) => (
+                                                    <CommandItem
+                                                        key={item.hsCode}
+                                                        value={item.hsCode}
+                                                        onSelect={() => {
+                                                            handleSelectChange("hsCode", item.hsCode);
+                                                            setOpenHS(false);
+                                                        }}
+                                                    >
+                                                        <div className="flex flex-col text-left">
+                                                            <span className="font-medium">{item.hsCode}</span>
+                                                            <span className="text-xs text-muted-foreground">
+                                {item.description}
+                              </span>
+                                                        </div>
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+
                             {formData.commodityDescription && (
                                 <p className="text-sm text-muted-foreground pl-1">
                                     {formData.commodityDescription}

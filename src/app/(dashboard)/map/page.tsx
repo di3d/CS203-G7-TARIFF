@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Map/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { AlertCircle, Globe } from "lucide-react";
 import { WorldMap } from "@/app/components/Map/world-map";
 import { MapLegend } from "@/app/components/Map/map-legend";

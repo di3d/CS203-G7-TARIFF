@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/app/components/Map/ui/card";
-import { Button } from "@/app/components/Map/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
 import {
     Select,
     SelectTrigger,
     SelectContent,
     SelectItem,
     SelectValue,
-} from "@/app/components/Map/ui/select";
+} from "@/app/components/ui/select";
 import { Trash2, Plus, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import countries from "world-countries";

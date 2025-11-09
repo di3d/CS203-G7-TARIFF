@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Map/ui/card";
-import { Button } from "@/app/components/Map/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
 import { ArrowLeft, AlertCircle, ArrowRight } from "lucide-react";
 import {
     Select,
@@ -11,7 +11,7 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/app/components/Map/ui/select";
+} from "@/app/components/ui/select";
 import { api } from "@/lib/api";
 
 interface TariffAgreementDTO {
