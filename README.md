@@ -1,30 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌐 Tarrific Frontend
 
-## Getting Started
+**Tarrific Frontend** is a Next.js + TypeScript application that provides an interactive web interface for managing tariffs, HS codes, and trade agreements.  
+It also features a powerful tariff calculator and world map visualization of international trade data.
 
-First, run the development server:
+---
 
+## ⚙️ Tech Stack
+
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript
+- **UI:** Tailwind CSS + ShadCN UI
+- **HTTP Client:** Axios
+- **Map Visualization:** React Simple Maps
+- **Icons:** Lucide React
+
+---
+
+## 🚀 Features
+
+- 🧮 **Tariff Calculator** — Compute import duties and preferential rates.
+- 🌏 **Interactive World Map** — Visualize tariff data across countries.
+- 📦 **HS Code Management** — Search and manage product classification codes.
+- ⚖️ **Trade Agreement Support** — Reflects preferential tariff rates.
+- 🧰 **Admin Tools** — Manage countries, tariffs, and codes in one dashboard.
+
+---
+
+## 🧩 Project Structure
+
+tarrific-frontend/
+├── public/
+├── src/
+│   ├── app/
+│   ├── components/
+│   │   ├── Map/
+│   │   └── ui/
+│   ├── lib/
+│   │   └── api.ts
+│   └── styles/
+├── .env.local
+├── package.json
+└── README.md
+
+---
+
+## ⚙️ Environment Setup
+
+### 1. Install Dependencies
 ```bash
-pnpm dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Create `.env.local`
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8080
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Run Development Server
+```bash
+npm run dev
+```
+Then open [http://localhost:3000](http://localhost:3000).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🧠 Development Notes
 
-To learn more about Next.js, take a look at the following resources:
+- All API requests go through `src/lib/api.ts`.
+- Imports use `@` alias mapped to `./src`.
+- ShadCN components are stored in `src/components/ui/`.
+- HS code dropdowns and calculators are fully reactive.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🧾 Scripts
 
-## Deploy on Vercel
+| Command | Description |
+|----------|-------------|
+| `npm run dev` | Start local development server |
+| `npm run build` | Build for production |
+| `npm start` | Run built version |
+| `npm run lint` | Lint and fix code |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📦 Deployment
+
+To build and deploy:
+```bash
+npm run build
+npm start
+```
+
+For Docker:
+```bash
+docker build -t tarrific-frontend .
+docker run -p 3000:3000 tarrific-frontend
+```
+
+---
+
+## 🧾 License
+MIT License © 2025 — Tarrific Development Team
