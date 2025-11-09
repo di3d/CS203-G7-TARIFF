@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/app/components/Map/ui/card";
+import { Input } from "@/app/components/Map/ui/input";
 import { Loader2, ChevronDown, ChevronRight, FileSearch } from "lucide-react";
 import React from "react";
 import { api } from "@/lib/api";

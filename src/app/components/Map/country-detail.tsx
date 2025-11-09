@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Map/ui/card";
 
 interface TradeAgreement {
   countryA: string;

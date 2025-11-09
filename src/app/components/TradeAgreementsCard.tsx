@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/app/components/Map/ui/card";
 import { AlertCircle, ScrollText, Loader2, Globe2 } from "lucide-react";
 import { api } from "@/lib/api";
 

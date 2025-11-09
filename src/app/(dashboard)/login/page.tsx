@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Map/ui/card";
+import { Label } from "@/app/components/Map/ui/label";
+import { Input } from "@/app/components/Map/ui/input";
+import { Button } from "@/app/components/Map/ui/button";
 import { AlertCircle } from "lucide-react";
 
 export default function LoginPage() {

@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/Map/ui/card";
+import { Input } from "@/app/components/Map/ui/input";
+import { Label } from "@/app/components/Map/ui/label";
+import { Button } from "@/app/components/Map/ui/button";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select";
+} from "@/app/components/Map/ui/select";
 import { Calculator } from "lucide-react";
 
 interface HSCode {

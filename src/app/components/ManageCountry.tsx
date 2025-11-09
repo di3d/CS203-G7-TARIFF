@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/app/components/Map/ui/card";
+import { Button } from "@/app/components/Map/ui/button";
 import {
     Select,
     SelectTrigger,
     SelectContent,
     SelectItem,
     SelectValue,
-} from "@/components/ui/select";
+} from "@/app/components/Map/ui/select";
 import { Trash2, Plus, Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
 import countries from "world-countries";
@@ -66,7 +66,7 @@ export function ManageCountry() {
         try {
             await api.delete(`/countries/${id}`);
             setCountriesData((prev) => prev.filter((c) => c.id !== id));
-        } catch (err: any) {
+        } catch (err: never) {
             if (err.response?.status === 409) {
                 alert(err.response.data);
             }

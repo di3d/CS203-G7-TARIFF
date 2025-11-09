@@ -155,7 +155,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     );
   };
 
-  const handleMouseEnter = (geo: any) => {
+  const handleMouseEnter = (geo: never) => {
     const geoName = geo.properties.name;
     const countryData = getCountryData(geoName);
     const agreements = getTradeAgreements(geoName);
@@ -252,7 +252,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     setTooltipContent("");
   };
 
-  const handleCountryClick = (geo: any) => {
+  const handleCountryClick = (geo: never) => {
     const geoName = geo.properties.name;
     const countryData = getCountryData(geoName);
     const agreements = getTradeAgreements(geoName);
@@ -266,7 +266,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     }
   };
 
-  const getFillColor = (geo: any) => {
+  const getFillColor = (geo: never) => {
     const geoName = geo.properties.name;
     const countryData = getCountryData(geoName);
 
