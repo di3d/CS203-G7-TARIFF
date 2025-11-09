@@ -1,175 +1,172 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Calculator, Home, Globe, LogOut, LogIn, User } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ThemeToggle } from "../Map/theme-toggle";
+import {
+    Calculator,
+    Home,
+    Globe,
+    LogOut,
+    LogIn,
+    User,
+} from "lucide-react";
 import { Button } from "./button";
-import { useEffect, useState } from "react";
+import { ThemeToggle } from "../Map/theme-toggle";
+import { cn } from "@/lib/utils";
 
-const routes = [
-	{
-		label: "Dashboard",
-		icon: Home,
-		href: "/dashboard",
-	},
-	{
-		label: "Calculator",
-		icon: Calculator,
-		href: "/calculator",
-	},
-	{
-		label: "Tariff Map",
-		icon: Globe,
-		href: "/map",
-	},
+const baseRoutes = [
+    { label: "Dashboard", icon: Home, href: "/dashboard" },
+    { label: "Calculator", icon: Calculator, href: "/calculator" },
+    { label: "Tariff Map", icon: Globe, href: "/map" },
 ];
 
 export function Sidebar() {
-	const pathname = usePathname();
-	const router = useRouter();
-	const [isLoggedIn, setIsLoggedIn] = useState(false);
-	const [role, setRole] = useState<string | null>(null);
+    const pathname = usePathname();
+    const router = useRouter();
 
-	useEffect(() => {
-		// Check if user is logged in and read role from localStorage.
-		// Support multiple shapes: `role` string, `user` JSON, or derive role from JWTs.
-		const token = localStorage.getItem("token");
-		setIsLoggedIn(!!token);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [role, setRole] = useState<string | null>(null);
 
-		let storedRole = localStorage.getItem("role");
+    // --- Token and Role Detection ---
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        setIsLoggedIn(Boolean(token));
 
-		if (!storedRole) {
-			const userJson = localStorage.getItem("user");
-			if (userJson) {
-				try {
-					const userObj = JSON.parse(userJson);
-					if (userObj && userObj.role) storedRole = String(userObj.role);
-				} catch (e) {
-					// ignore
-				}
-			}
-		}
+        let foundRole = localStorage.getItem("role");
 
-		// If still no role, try to extract from idToken/accessToken (JWT)
-		if (!storedRole) {
-			const idToken = localStorage.getItem("idToken") || localStorage.getItem("accessToken");
-			if (idToken) {
-				try {
-					const payloadBase64 = idToken.split(".")[1];
-					if (payloadBase64) {
-						const base64 = payloadBase64.replace(/-/g, "+").replace(/_/g, "/");
-						const pad = base64.length % 4;
-						const padded = pad ? base64 + "=".repeat(4 - pad) : base64;
-						const json = atob(padded);
-						const claims = JSON.parse(json);
+        // Try to infer role from user JSON
+        if (!foundRole) {
+            const userJson = localStorage.getItem("user");
+            if (userJson) {
+                try {
+                    const user = JSON.parse(userJson);
+                    if (user?.role) foundRole = String(user.role);
+                } catch {
+                    // ignore invalid JSON
+                }
+            }
+        }
 
-						const groups = claims["cognito:groups"] || claims["groups"];
-						const scope = claims["scope"] || "";
-						const roleClaim = claims["role"] || null;
-						const realmRoles = claims["realm_access"]?.roles;
+        // Try to infer role from JWT (idToken or accessToken)
+        if (!foundRole) {
+            const jwt = localStorage.getItem("idToken") || localStorage.getItem("accessToken");
+            if (jwt) {
+                try {
+                    const [, payloadBase64] = jwt.split(".");
+                    const base64 = payloadBase64?.replace(/-/g, "+").replace(/_/g, "/") ?? "";
+                    const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, "=");
+                    const claims = JSON.parse(atob(padded));
 
-						if (Array.isArray(groups) && groups.map(String).some((g) => g.toLowerCase() === "admin")) {
-							storedRole = "Admin";
-						} else if (Array.isArray(realmRoles) && realmRoles.map(String).some((r) => r.toLowerCase() === "admin")) {
-							storedRole = "Admin";
-						} else if (typeof scope === "string" && scope.toLowerCase().includes("admin")) {
-							storedRole = "Admin";
-						} else if (roleClaim && String(roleClaim).toLowerCase() === "admin") {
-							storedRole = "Admin";
-						}
-					}
-				} catch (e) {
-					// ignore parse errors
-				}
-			}
-		}
+                    const groups = claims["cognito:groups"] || claims["groups"] || [];
+                    const scope = claims["scope"] || "";
+                    const roleClaim = claims["role"];
+                    const realmRoles = claims["realm_access"]?.roles || [];
 
-		setRole(storedRole ? storedRole : null);
-	}, [pathname]);
+                    const allRoles = [
+                        ...(Array.isArray(groups) ? groups : []),
+                        ...(Array.isArray(realmRoles) ? realmRoles : []),
+                        ...(typeof scope === "string" ? [scope] : []),
+                        roleClaim ? [roleClaim] : [],
+                    ].map((r) => String(r).toLowerCase());
 
-	const handleAuthAction = () => {
-		if (isLoggedIn) {
-			// Logout
-			localStorage.removeItem("token");
-			localStorage.removeItem("role");
-			localStorage.removeItem("userId");
-			setIsLoggedIn(false);
-			router.push("/login");
-		} else {
-			// Login
-			router.push("/login");
-		}
-	};
+                    if (allRoles.some((r) => r.includes("admin"))) foundRole = "Admin";
+                } catch {
+                    // ignore malformed JWTs
+                }
+            }
+        }
 
-	// If an Admin logs in, redirect them to the dashboard when they complete login.
-	useEffect(() => {
-		if (
-			isLoggedIn &&
-			role &&
-			String(role).toLowerCase() === "admin" &&
-			(pathname === "/login" || pathname === "/")
-		) {
-			router.push("/dashboard");
-		}
-	}, [isLoggedIn, role, pathname, router]);
+        setRole(foundRole ?? null);
+    }, [pathname]);
 
-	return (
-		<div className="space-y-4 py-4 flex flex-col h-full bg-background border-r">
-			<div className="px-3 py-2 flex-1">
-				<Link href="/dashboard" className="flex items-center pl-3 mb-14">
-					<h1 className="text-2xl font-bold">Tarrific</h1>
-				</Link>
-				<div className="space-y-1">
-					{(() => {
-						const navRoutes = [...routes];
-						if (isLoggedIn && role && String(role).toLowerCase() === "admin") {
-							navRoutes.push({ label: "Admin", icon: User, href: "/admin2" });
-						}
-						return navRoutes.map((route) => (
-							<Link
-								key={route.href}
-								href={route.href}
-								className={cn(
-									"text-sm group flex p-3 w-full justify-start font-medium cursor-pointer hover:text-primary hover:bg-primary/10 rounded-lg transition",
-									pathname === route.href
-										? "text-primary bg-primary/10"
-										: "text-muted-foreground"
-								)}
-							>
-								<div className="flex items-center flex-1">
-									<route.icon className="h-5 w-5 mr-3" />
-									{route.label}
-								</div>
-							</Link>
-						));
-					})()}
-				</div>
-			</div>
-			<div className="px-3 py-2 space-y-2">
-				<div className="flex items-center justify-between px-3">
-					<span className="text-sm text-muted-foreground">Theme</span>
-					<ThemeToggle />
-				</div>
-				<Button
-					onClick={handleAuthAction}
-					variant="ghost"
-					className="w-full justify-start text-muted-foreground hover:text-primary"
-				>
-					{isLoggedIn ? (
-						<>
-							<LogOut className="h-5 w-5 mr-3" />
-							Logout
-						</>
-					) : (
-						<>
-							<LogIn className="h-5 w-5 mr-3" />
-							Login
-						</>
-					)}
-				</Button>
-			</div>
-		</div>
-	);
+    // --- Auth Actions ---
+    const handleAuth = () => {
+        if (isLoggedIn) {
+            localStorage.clear();
+            setIsLoggedIn(false);
+            router.push("/login");
+        } else {
+            router.push("/login");
+        }
+    };
+
+    // --- Redirect Admins to dashboard on login ---
+    useEffect(() => {
+        if (
+            isLoggedIn &&
+            role?.toLowerCase() === "admin" &&
+            (pathname === "/login" || pathname === "/")
+        ) {
+            router.push("/dashboard");
+        }
+    }, [isLoggedIn, role, pathname, router]);
+
+    // --- Dynamic Routes ---
+    const navRoutes = [
+        ...baseRoutes,
+        ...(isLoggedIn && role?.toLowerCase() === "admin"
+            ? [{ label: "Admin", icon: User, href: "/admin2" }]
+            : []),
+    ];
+
+    // --- Render ---
+    return (
+        <aside className="flex flex-col h-full bg-background border-r">
+            {/* Logo / Header */}
+            <div className="px-3 py-4">
+                <Link href="/dashboard" className="flex items-center pl-3 mb-10">
+                    <h1 className="text-2xl font-bold">Tarrific</h1>
+                </Link>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 space-y-1 px-3">
+                {navRoutes.map(({ label, icon: Icon, href }) => {
+                    const active = pathname === href;
+                    return (
+                        <Link
+                            key={href}
+                            href={href}
+                            className={cn(
+                                "group flex items-center p-3 rounded-lg font-medium text-sm transition",
+                                active
+                                    ? "bg-primary/10 text-primary"
+                                    : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                            )}
+                        >
+                            <Icon className="h-5 w-5 mr-3 shrink-0" />
+                            {label}
+                        </Link>
+                    );
+                })}
+            </nav>
+
+            {/* Footer */}
+            <div className="border-t border-border/50 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Theme</span>
+                    <ThemeToggle />
+                </div>
+
+                <Button
+                    onClick={handleAuth}
+                    variant="ghost"
+                    className="w-full justify-start text-muted-foreground hover:text-primary"
+                >
+                    {isLoggedIn ? (
+                        <>
+                            <LogOut className="h-5 w-5 mr-3" />
+                            Logout
+                        </>
+                    ) : (
+                        <>
+                            <LogIn className="h-5 w-5 mr-3" />
+                            Login
+                        </>
+                    )}
+                </Button>
+            </div>
+        </aside>
+    );
 }
