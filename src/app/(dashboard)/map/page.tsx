@@ -21,7 +21,6 @@ interface Tariff {
 interface Country {
     id: number;
     name: string;
-    tariffRate: number;
 }
 
 export default function MapPage() {
@@ -52,7 +51,6 @@ export default function MapPage() {
         fetchData();
     }, []);
 
-    // Fix: Include hsCode so it matches TradeAgreement type
     const formattedAgreements = tariffs.map((t) => ({
         agreementName: "Base Tariff",
         hsCode: t.hsCode,
@@ -67,7 +65,7 @@ export default function MapPage() {
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Tariff Map</h1>
                 <p className="text-muted-foreground">
-                    Map visualisation of tariff rates and active trade agreements
+                    Map visualisation of trade relationships and tariff agreements
                 </p>
             </div>
 
@@ -82,7 +80,7 @@ export default function MapPage() {
                 <CardContent>
                     {loading ? (
                         <div className="flex items-center justify-center h-96">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
                         </div>
                     ) : error ? (
                         <div className="flex items-center gap-2 text-destructive">
@@ -97,9 +95,8 @@ export default function MapPage() {
                             />
                             <MapLegend />
                             <p className="text-xs text-muted-foreground">
-                                Hover over countries to view base tariff rates and trade
-                                agreement summaries. Click on a country for a detailed
-                                breakdown of all agreements.
+                                Hover over countries to view active trade summaries. Click a
+                                country for detailed breakdowns.
                             </p>
                         </div>
                     )}
