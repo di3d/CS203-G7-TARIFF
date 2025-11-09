@@ -1,4 +1,3 @@
-```markdown
 # Tarrific Frontend
 
 Tarrific Frontend is a Next.js + TypeScript application that provides an interactive web interface for managing tariffs, HS codes, and trade agreements. It also includes a tariff calculator and a world map visualization of international trade data.
@@ -114,5 +113,4 @@ docker build -t tarrific-frontend .
 docker run -p 3000:3000 tarrific-frontend
 ```
 
-```
 ```
