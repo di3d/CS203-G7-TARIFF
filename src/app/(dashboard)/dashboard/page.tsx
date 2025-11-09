@@ -1,8 +1,10 @@
 // src/app/(dashboard)/dashboard/page.tsx
 "use client";
-import {useEffect, useState} from "react";
+
+import { useEffect, useState } from "react";
 import TradeAgreementsCard from "@/app/components/TradeAgreementsCard";
-import {TariffViewer} from "@/app/components/TariffViewer";
+import { TariffViewer } from "@/app/components/TariffViewer";
+import { api } from "@/lib/api";
 
 type Tariff = {
     id: number;
@@ -31,21 +33,12 @@ export default function DashboardPage() {
         const fetchData = async () => {
             try {
                 const [tariffsRes, countriesRes] = await Promise.all([
-                    fetch("http://localhost:8080/api/trade-agreements/tariffs"),
-                    fetch("http://localhost:8080/api/countries"),
+                    api.get<Tariff[]>("/trade-agreements/tariffs"),
+                    api.get<Country[]>("/countries"),
                 ]);
 
-                if (!tariffsRes.ok || !countriesRes.ok) {
-                    throw new Error("Failed to fetch data");
-                }
-
-                const [tariffsData, countriesData] = await Promise.all([
-                    tariffsRes.json(),
-                    countriesRes.json(),
-                ]);
-
-                setTariffs(tariffsData);
-                setCountries(countriesData);
+                setTariffs(tariffsRes.data);
+                setCountries(countriesRes.data);
                 setError(null);
             } catch (err) {
                 console.error("Error fetching data:", err);
@@ -55,8 +48,24 @@ export default function DashboardPage() {
             }
         };
 
-        fetchData();
+        void fetchData();
     }, []);
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-60 text-muted-foreground">
+                Loading dashboard...
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="flex justify-center items-center h-60 text-destructive">
+                {error}
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -66,8 +75,8 @@ export default function DashboardPage() {
                     Global tariff overview and trade agreements
                 </p>
             </div>
-            <TradeAgreementsCard/>
-            <TariffViewer/>
+            <TradeAgreementsCard />
+            <TariffViewer />
         </div>
     );
 }

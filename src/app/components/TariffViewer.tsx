@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Loader2, ChevronDown, ChevronRight, FileSearch } from "lucide-react";
 import React from "react";
+import { api } from "@/lib/api";
 
 interface Country {
     name: string;
@@ -27,10 +28,15 @@ export function TariffViewer() {
     const [expanded, setExpanded] = useState<number | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:8080/api/tariffs/with-countries") // ✅ NEW ENDPOINT
-            .then((r) => r.json())
-            .then(setTariffs)
-            .finally(() => setLoading(false));
+        const fetchTariffs = async () => {
+            try {
+                const { data } = await api.get<Tariff[]>("/tariffs/with-countries");
+                setTariffs(data);
+            } finally {
+                setLoading(false);
+            }
+        };
+        void fetchTariffs();
     }, []);
 
     const filtered = tariffs.filter((t) =>
@@ -82,9 +88,11 @@ export function TariffViewer() {
                                         setExpanded(expanded === t.tariffId ? null : t.tariffId)
                                     }
                                 >
-                                    {expanded === t.tariffId
-                                        ? <ChevronDown className="h-4 w-4" />
-                                        : <ChevronRight className="h-4 w-4" />}
+                                    {expanded === t.tariffId ? (
+                                        <ChevronDown className="h-4 w-4" />
+                                    ) : (
+                                        <ChevronRight className="h-4 w-4" />
+                                    )}
                                 </td>
                                 <td className="px-4 py-2 font-medium">{t.hsCode.hsCode}</td>
                                 <td className="px-4 py-2">{t.hsCode.description}</td>
@@ -99,16 +107,22 @@ export function TariffViewer() {
                                                 <strong>Allowed Origins (Exporting Countries):</strong>
                                                 <ul className="list-disc ml-5">
                                                     {t.origins.map((c) => (
-                                                        <li key={c.isoCode}>{c.name} ({c.isoCode})</li>
+                                                        <li key={c.isoCode}>
+                                                            {c.name} ({c.isoCode})
+                                                        </li>
                                                     ))}
                                                 </ul>
                                             </div>
 
                                             <div>
-                                                <strong>Allowed Destinations (Importing Countries):</strong>
+                                                <strong>
+                                                    Allowed Destinations (Importing Countries):
+                                                </strong>
                                                 <ul className="list-disc ml-5">
                                                     {t.destinations.map((c) => (
-                                                        <li key={c.isoCode}>{c.name} ({c.isoCode})</li>
+                                                        <li key={c.isoCode}>
+                                                            {c.name} ({c.isoCode})
+                                                        </li>
                                                     ))}
                                                 </ul>
                                             </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { AlertCircle, ScrollText, Loader2, Globe2 } from "lucide-react";
+import { api } from "@/lib/api";
 
 interface Country {
     countryId: number;
@@ -29,19 +30,15 @@ export default function TradeAgreementsCard() {
         const fetchAgreements = async () => {
             try {
                 // Step 1: get all agreements
-                const res = await fetch("http://localhost:8080/api/trade-agreements");
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                const baseData: TradeAgreement[] = await res.json();
+                const { data: baseData } = await api.get<TradeAgreement[]>("/trade-agreements");
 
                 // Step 2: for each agreement, fetch its countries
                 const withCountries = await Promise.all(
                     baseData.map(async (a) => {
                         try {
-                            const res2 = await fetch(
-                                `http://localhost:8080/api/trade-agreements/${a.agreementId}/countries`
+                            const { data: countries } = await api.get<Country[]>(
+                                `/trade-agreements/${a.agreementId}/countries`
                             );
-                            if (!res2.ok) throw new Error();
-                            const countries: Country[] = await res2.json();
                             return { ...a, countries };
                         } catch {
                             return { ...a, countries: [] };
@@ -57,7 +54,7 @@ export default function TradeAgreementsCard() {
             }
         };
 
-        fetchAgreements();
+        void fetchAgreements();
     }, []);
 
     return (
@@ -86,10 +83,16 @@ export default function TradeAgreementsCard() {
                             <tr className="border-b bg-muted/50">
                                 <th className="px-4 py-3 text-left text-sm font-medium">ID</th>
                                 <th className="px-4 py-3 text-left text-sm font-medium">Name</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Description</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Effective</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">
+                                    Description
+                                </th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">
+                                    Effective
+                                </th>
                                 <th className="px-4 py-3 text-left text-sm font-medium">Expiry</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Member Countries</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">
+                                    Member Countries
+                                </th>
                             </tr>
                             </thead>
                             <tbody>
@@ -125,7 +128,9 @@ export default function TradeAgreementsCard() {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <span className="text-muted-foreground text-xs">No countries</span>
+                                            <span className="text-muted-foreground text-xs">
+                          No countries
+                        </span>
                                         )}
                                     </td>
                                 </tr>

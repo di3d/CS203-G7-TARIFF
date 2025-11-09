@@ -15,6 +15,7 @@ import {
     Edit2,
 } from "lucide-react";
 import {toast} from "sonner";
+import {api} from "@/lib/api";
 
 interface Country {
     countryId?: number;
@@ -68,61 +69,40 @@ export default function ManageTariff() {
         tariffDestinations: [],
     });
 
-    const API_URL = "http://localhost:8080/api/tariffs";
-
-    useEffect(() => {
-        void fetchTariffs();
-    }, []);
-
     const fetchTariffs = async (): Promise<void> => {
         try {
             setLoading(true);
-            const res = await fetch(API_URL);
-            if (!res.ok) {
-                toast.error("Failed to load tariffs from server.");
-                return;
-            }
-            const data: Tariff[] = await res.json();
+            const {data} = await api.get<Tariff[]>("/tariffs");
             setTariffs(data);
         } catch {
             setError("Failed to load tariffs.");
+            toast.error("Failed to load tariffs from server.");
         } finally {
             setLoading(false);
         }
     };
 
+    useEffect(() => {
+        void fetchTariffs();
+    }, []);
+
     const handleCreate = async (): Promise<void> => {
         try {
             const payload: Tariff = {
                 ...(newTariff as Tariff),
-                tariffOrigins:
-                    newTariff.tariffOrigins?.length
-                        ? newTariff.tariffOrigins
-                        : newTariff.origins
-                            ? newTariff.origins
-                                .split(",")
-                                .map((o) => ({country: {name: o.trim()}}))
-                            : [],
-                tariffDestinations:
-                    newTariff.tariffDestinations?.length
-                        ? newTariff.tariffDestinations
-                        : newTariff.destinations
-                            ? newTariff.destinations
-                                .split(",")
-                                .map((d) => ({country: {name: d.trim()}}))
-                            : [],
+                tariffOrigins: newTariff.origins
+                    ? newTariff.origins
+                        .split(",")
+                        .map((o) => ({country: {name: o.trim()}}))
+                    : [],
+                tariffDestinations: newTariff.destinations
+                    ? newTariff.destinations
+                        .split(",")
+                        .map((d) => ({country: {name: d.trim()}}))
+                    : [],
             };
 
-            const res = await fetch(API_URL, {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(payload),
-            });
-            if (!res.ok) {
-                toast.error("Failed to create tariff.");
-                return;
-            }
-
+            await api.post("/tariffs", payload);
             toast.success("Tariff created.");
             setNewTariff({
                 hsCode: {hsCode: "", description: ""},
@@ -156,17 +136,7 @@ export default function ManageTariff() {
                     : [],
             };
 
-            const res = await fetch(`${API_URL}/${editingId}`, {
-                method: "PUT",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) {
-                toast.error("Failed to update tariff.");
-                return;
-            }
-
+            await api.put(`/tariffs/${editingId}`, payload);
             toast.success("Tariff updated.");
             setEditingId(null);
             await fetchTariffs();
@@ -179,11 +149,7 @@ export default function ManageTariff() {
         if (!id) return;
         if (!confirm("Delete this tariff?")) return;
         try {
-            const res = await fetch(`${API_URL}/${id}`, {method: "DELETE"});
-            if (!res.ok) {
-                toast.error("Failed to delete tariff.");
-                return;
-            }
+            await api.delete(`/tariffs/${id}`);
             toast.success("Tariff deleted.");
             await fetchTariffs();
         } catch {
@@ -205,6 +171,7 @@ export default function ManageTariff() {
                     Manage Tariffs
                 </CardTitle>
             </CardHeader>
+
             <CardContent>
                 {loading ? (
                     <div className="flex justify-center py-10 text-muted-foreground">
@@ -218,7 +185,6 @@ export default function ManageTariff() {
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        {/* Add New Tariff */}
                         <div className="grid grid-cols-6 gap-2">
                             <Input
                                 placeholder="HS Code"
@@ -226,10 +192,7 @@ export default function ManageTariff() {
                                 onChange={(e) =>
                                     setNewTariff({
                                         ...newTariff,
-                                        hsCode: {
-                                            ...newTariff.hsCode!,
-                                            hsCode: e.target.value,
-                                        },
+                                        hsCode: {...newTariff.hsCode!, hsCode: e.target.value},
                                     })
                                 }
                             />
@@ -239,10 +202,7 @@ export default function ManageTariff() {
                                 onChange={(e) =>
                                     setNewTariff({
                                         ...newTariff,
-                                        hsCode: {
-                                            ...newTariff.hsCode!,
-                                            description: e.target.value,
-                                        },
+                                        hsCode: {...newTariff.hsCode!, description: e.target.value},
                                     })
                                 }
                             />
@@ -282,20 +242,14 @@ export default function ManageTariff() {
                                 placeholder="Origins (comma-separated)"
                                 className="col-span-3"
                                 onChange={(e) =>
-                                    setNewTariff({
-                                        ...newTariff,
-                                        origins: e.target.value,
-                                    })
+                                    setNewTariff({...newTariff, origins: e.target.value})
                                 }
                             />
                             <Input
                                 placeholder="Destinations (comma-separated)"
                                 className="col-span-3"
                                 onChange={(e) =>
-                                    setNewTariff({
-                                        ...newTariff,
-                                        destinations: e.target.value,
-                                    })
+                                    setNewTariff({...newTariff, destinations: e.target.value})
                                 }
                             />
                             <Button className="col-span-6 mt-2" onClick={handleCreate}>
@@ -304,7 +258,6 @@ export default function ManageTariff() {
                             </Button>
                         </div>
 
-                        {/* Tariffs Table */}
                         <div className="border rounded-md overflow-auto">
                             <table className="w-full text-xs">
                                 <thead>
@@ -324,10 +277,7 @@ export default function ManageTariff() {
                                 <tbody>
                                 {tariffs.map((t) =>
                                     editingId === t.tariffId ? (
-                                        <tr
-                                            key={t.tariffId}
-                                            className="border-t bg-muted/30 transition"
-                                        >
+                                        <tr key={t.tariffId} className="border-t bg-muted/30">
                                             <td className="px-2 py-1.5">{t.tariffId}</td>
                                             <td className="px-2 py-1.5">
                                                 <Input
@@ -383,9 +333,7 @@ export default function ManageTariff() {
                                             <td className="px-2 py-1.5">
                                                 <Input
                                                     type="date"
-                                                    value={
-                                                        editedTariff.effectiveDate?.split("T")[0] || ""
-                                                    }
+                                                    value={editedTariff.effectiveDate?.split("T")[0] || ""}
                                                     onChange={(e) =>
                                                         setEditedTariff({
                                                             ...editedTariff,
@@ -461,17 +409,17 @@ export default function ManageTariff() {
                                             <td className="px-2 py-1.5">{t.hsCode.description}</td>
                                             <td className="px-2 py-1.5">{t.baseRate}%</td>
                                             <td className="px-2 py-1.5">{t.rateType}</td>
-                                            <td className="px-2 py-1.5">{formatDate(t.effectiveDate)}</td>
-                                            <td className="px-2 py-1.5">{formatDate(t.expiryDate)}</td>
                                             <td className="px-2 py-1.5">
-                                                {t.tariffOrigins
-                                                    ?.map((o) => o.country.name)
-                                                    .join(", ") || "—"}
+                                                {formatDate(t.effectiveDate)}
                                             </td>
                                             <td className="px-2 py-1.5">
-                                                {t.tariffDestinations
-                                                    ?.map((d) => d.country.name)
-                                                    .join(", ") || "—"}
+                                                {formatDate(t.expiryDate)}
+                                            </td>
+                                            <td className="px-2 py-1.5">
+                                                {t.tariffOrigins?.map((o) => o.country.name).join(", ") || "—"}
+                                            </td>
+                                            <td className="px-2 py-1.5">
+                                                {t.tariffDestinations?.map((d) => d.country.name).join(", ") || "—"}
                                             </td>
                                             <td className="px-2 py-1.5 text-center">
                                                 <div className="flex gap-1 justify-center">

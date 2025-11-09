@@ -3,18 +3,25 @@
 import { useEffect, useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import {
+    Select,
+    SelectTrigger,
+    SelectContent,
+    SelectItem,
+    SelectValue,
+} from "@/components/ui/select";
 import { Trash2, Plus, Loader2 } from "lucide-react";
+import { api } from "@/lib/api";
 import countries from "world-countries";
 
 interface Country {
     id?: number;
+    countryId?: number;
     name: string;
     isoCode: string;
     region: string;
 }
 
-// Full ISO dataset -> convert to our format
 const PRESET_COUNTRIES = countries.map((c) => ({
     name: c.name.common,
     isoCode: c.cca2,
@@ -27,46 +34,43 @@ export function ManageCountry() {
     const [selected, setSelected] = useState<Country | null>(null);
 
     useEffect(() => {
-        fetch("http://localhost:8080/api/countries")
-            .then((r) => r.json())
-            .then(setCountriesData)
-            .finally(() => setLoading(false));
+        void fetchCountries();
     }, []);
 
-    const addCountry = async () => {
-        if (!selected) return;
-
-        const res = await fetch("http://localhost:8080/api/countries", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(selected),
-        });
-
-        if (res.ok) {
-            const created = await res.json();
-
-            const normalized = {
-                id: created.id ?? created.countryId,
-                name: created.name,
-                isoCode: created.isoCode,
-                region: created.region,
-            };
-
-            setCountriesData((prev) => [...prev, normalized]);
-            setSelected(null);
+    const fetchCountries = async (): Promise<void> => {
+        try {
+            const { data } = await api.get<Country[]>("/countries");
+            setCountriesData(data);
+        } finally {
+            setLoading(false);
         }
     };
 
-    const deleteCountry = async (id: number) => {
-        const res = await fetch(`http://localhost:8080/api/countries/${id}`, { method: "DELETE" });
+    const addCountry = async (): Promise<void> => {
+        if (!selected) return;
 
-        if (res.status === 409) {
-            const msg = await res.text();
-            alert(msg);
-            return;
+        const { data } = await api.post<Country>("/countries", selected);
+
+        const normalized = {
+            id: data.id ?? data.countryId,
+            name: data.name,
+            isoCode: data.isoCode,
+            region: data.region,
+        };
+
+        setCountriesData((prev) => [...prev, normalized]);
+        setSelected(null);
+    };
+
+    const deleteCountry = async (id: number): Promise<void> => {
+        try {
+            await api.delete(`/countries/${id}`);
+            setCountriesData((prev) => prev.filter((c) => c.id !== id));
+        } catch (err: any) {
+            if (err.response?.status === 409) {
+                alert(err.response.data);
+            }
         }
-
-        if (res.ok) setCountriesData((prev) => prev.filter((c) => c.id !== id));
     };
 
     if (loading)
@@ -83,7 +87,6 @@ export function ManageCountry() {
             </CardHeader>
 
             <CardContent>
-                {/* Add New Country */}
                 <div className="flex gap-2 mb-4 items-center">
                     <Select
                         value={selected?.isoCode ?? ""}
@@ -109,7 +112,6 @@ export function ManageCountry() {
                     </Button>
                 </div>
 
-                {/* Table */}
                 <table className="w-full border text-sm">
                     <thead className="bg-muted/50">
                     <tr>
@@ -129,7 +131,11 @@ export function ManageCountry() {
                             <td className="px-4 py-2">{c.isoCode}</td>
                             <td className="px-4 py-2">{c.region}</td>
                             <td className="px-4 py-2">
-                                <Button variant="destructive" size="sm" onClick={() => deleteCountry(c.id!)}>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => deleteCountry(c.id!)}
+                                >
                                     <Trash2 className="h-3 w-3" />
                                 </Button>
                             </td>

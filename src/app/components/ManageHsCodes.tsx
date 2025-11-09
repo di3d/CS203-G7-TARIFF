@@ -15,6 +15,7 @@ import {
     AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import {api} from "@/lib/api";
 
 interface HsCode {
     hsCode: string;
@@ -27,30 +28,27 @@ export default function ManageHsCodes() {
     const [error, setError] = useState("");
     const [editing, setEditing] = useState<string | null>(null);
     const [edited, setEdited] = useState<Partial<HsCode>>({});
-    const [newCode, setNewCode] = useState<HsCode>({ hsCode: "", description: "" });
-
-    const API_URL = "http://localhost:8080/api/hscodes";
-
-    useEffect(() => {
-        void fetchHsCodes();
-    }, []);
+    const [newCode, setNewCode] = useState<HsCode>({
+        hsCode: "",
+        description: "",
+    });
 
     const fetchHsCodes = async (): Promise<void> => {
         try {
             setLoading(true);
-            const res = await fetch(API_URL);
-            if (!res.ok) {
-                toast.error("Failed to fetch HS Codes.");
-                return;
-            }
-            const data: HsCode[] = await res.json();
+            const { data } = await api.get<HsCode[]>("/hscodes");
             setCodes(data);
         } catch {
             setError("Unable to load HS Codes.");
+            toast.error("Failed to fetch HS Codes.");
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        void fetchHsCodes();
+    }, []);
 
     const handleCreate = async (): Promise<void> => {
         if (!newCode.hsCode.trim() || !newCode.description.trim()) {
@@ -58,15 +56,7 @@ export default function ManageHsCodes() {
             return;
         }
         try {
-            const res = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(newCode),
-            });
-            if (!res.ok) {
-                toast.error("Failed to create HS Code.");
-                return;
-            }
+            await api.post("/hscodes", newCode);
             toast.success("HS Code added successfully.");
             setNewCode({ hsCode: "", description: "" });
             await fetchHsCodes();
@@ -78,15 +68,7 @@ export default function ManageHsCodes() {
     const handleSave = async (): Promise<void> => {
         if (!editing) return;
         try {
-            const res = await fetch(`${API_URL}/${editing}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(edited),
-            });
-            if (!res.ok) {
-                toast.error("Failed to update HS Code.");
-                return;
-            }
+            await api.put(`/hscodes/${editing}`, edited);
             toast.success("HS Code updated.");
             setEditing(null);
             await fetchHsCodes();
@@ -98,11 +80,7 @@ export default function ManageHsCodes() {
     const handleDelete = async (code: string): Promise<void> => {
         if (!confirm(`Delete HS Code ${code}?`)) return;
         try {
-            const res = await fetch(`${API_URL}/${code}`, { method: "DELETE" });
-            if (!res.ok) {
-                toast.error("Failed to delete HS Code.");
-                return;
-            }
+            await api.delete(`/hscodes/${code}`);
             toast.success("HS Code deleted.");
             await fetchHsCodes();
         } catch {
@@ -132,7 +110,6 @@ export default function ManageHsCodes() {
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        {/* Add new HS code */}
                         <div className="flex gap-2">
                             <Input
                                 placeholder="HS Code"
@@ -154,7 +131,6 @@ export default function ManageHsCodes() {
                             </Button>
                         </div>
 
-                        {/* HS code list */}
                         <div className="border rounded-md overflow-auto">
                             <table className="w-full text-xs">
                                 <thead>
@@ -177,7 +153,10 @@ export default function ManageHsCodes() {
                                                 <Input
                                                     value={edited.description || ""}
                                                     onChange={(e) =>
-                                                        setEdited({ ...edited, description: e.target.value })
+                                                        setEdited({
+                                                            ...edited,
+                                                            description: e.target.value,
+                                                        })
                                                     }
                                                 />
                                             </td>
