@@ -33,6 +33,7 @@ import {
     Save,
     X,
     AlertCircle,
+    Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -60,44 +61,52 @@ interface Tariff {
 }
 
 type EditableTariff = Partial<Tariff> & {
-    origins?: string;
-    destinations?: string;
+    origins?: string[];
+    destinations?: string[];
 };
 
 export default function ManageTariffPage() {
     const [tariffs, setTariffs] = useState<Tariff[]>([]);
     const [hsCodes, setHsCodes] = useState<HsCode[]>([]);
+    const [countries, setCountries] = useState<Country[]>([]);
     const [loading, setLoading] = useState(true);
-    const [hsLoading, setHsLoading] = useState(true);
     const [error, setError] = useState("");
+
     const [openHS, setOpenHS] = useState(false);
+    const [openOrigin, setOpenOrigin] = useState(false);
+    const [openDest, setOpenDest] = useState(false);
 
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editedTariff, setEditedTariff] = useState<EditableTariff>({});
+    const [openOriginEdit, setOpenOriginEdit] = useState(false);
+    const [openDestEdit, setOpenDestEdit] = useState(false);
+
     const [newTariff, setNewTariff] = useState<EditableTariff>({
         hsCode: { hsCode: "", description: "" },
         baseRate: 0,
         rateType: "",
         effectiveDate: "",
         expiryDate: "",
+        origins: [],
+        destinations: [],
     });
 
-    // === Fetch HS Codes and Tariffs ===
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [tariffsRes, hsCodesRes] = await Promise.all([
+                const [tariffsRes, hsCodesRes, countriesRes] = await Promise.all([
                     api.get("/tariffs"),
                     api.get("/hscodes"),
+                    api.get("/countries"),
                 ]);
                 setTariffs(tariffsRes.data);
                 setHsCodes(hsCodesRes.data);
+                setCountries(countriesRes.data);
             } catch {
                 setError("Failed to load data.");
-                toast.error("Could not fetch tariffs or HS codes.");
+                toast.error("Could not fetch tariffs, HS codes, or countries.");
             } finally {
                 setLoading(false);
-                setHsLoading(false);
             }
         };
         void fetchData();
@@ -108,16 +117,15 @@ export default function ManageTariffPage() {
         setTariffs(data);
     };
 
+    const toggleSelection = (list: string[] = [], value: string): string[] =>
+        list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
+
     const handleCreate = async () => {
         try {
             const payload: Tariff = {
                 ...(newTariff as Tariff),
-                tariffOrigins: newTariff.origins
-                    ? newTariff.origins.split(",").map((o) => ({ country: { name: o.trim() } }))
-                    : [],
-                tariffDestinations: newTariff.destinations
-                    ? newTariff.destinations.split(",").map((d) => ({ country: { name: d.trim() } }))
-                    : [],
+                tariffOrigins: newTariff.origins?.map((n) => ({ country: { name: n } })) ?? [],
+                tariffDestinations: newTariff.destinations?.map((n) => ({ country: { name: n } })) ?? [],
             };
             await api.post("/tariffs", payload);
             toast.success("Tariff created.");
@@ -127,6 +135,8 @@ export default function ManageTariffPage() {
                 rateType: "",
                 effectiveDate: "",
                 expiryDate: "",
+                origins: [],
+                destinations: [],
             });
             await refreshTariffs();
         } catch {
@@ -139,12 +149,8 @@ export default function ManageTariffPage() {
         try {
             const payload: Tariff = {
                 ...(editedTariff as Tariff),
-                tariffOrigins: editedTariff.origins
-                    ? editedTariff.origins.split(",").map((o) => ({ country: { name: o.trim() } }))
-                    : [],
-                tariffDestinations: editedTariff.destinations
-                    ? editedTariff.destinations.split(",").map((d) => ({ country: { name: d.trim() } }))
-                    : [],
+                tariffOrigins: editedTariff.origins?.map((n) => ({ country: { name: n } })) ?? [],
+                tariffDestinations: editedTariff.destinations?.map((n) => ({ country: { name: n } })) ?? [],
             };
             await api.put(`/tariffs/${editingId}`, payload);
             toast.success("Tariff updated.");
@@ -186,31 +192,18 @@ export default function ManageTariffPage() {
                 </CardHeader>
 
                 <CardContent className="pt-6 space-y-10">
-                    {/* Create Form */}
+                    {/* === CREATE FORM === */}
                     <div className="space-y-6">
+                        {/* HS CODE SELECT */}
                         <div className="space-y-2">
-                            <Label htmlFor="hsCode">HS Code</Label>
+                            <Label>HS Code</Label>
                             <Popover open={openHS} onOpenChange={setOpenHS}>
                                 <PopoverTrigger asChild>
-                                    <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        className={cn(
-                                            "w-full justify-between h-11 text-left",
-                                            !newTariff.hsCode?.hsCode && "text-muted-foreground"
-                                        )}
-                                    >
-                                        {newTariff.hsCode?.hsCode ? (
-                                            <div className="flex flex-col text-left">
-                                                <span className="font-medium">{newTariff.hsCode.hsCode}</span>
-                                                <span className="text-xs text-muted-foreground truncate max-w-[260px]">
-                          {newTariff.hsCode.description}
-                        </span>
-                                            </div>
-                                        ) : (
-                                            "Select HS Code"
-                                        )}
-                                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    <Button variant="outline" className="w-full justify-between h-11 text-left">
+                                        {newTariff.hsCode?.hsCode
+                                            ? `${newTariff.hsCode.hsCode} - ${newTariff.hsCode.description}`
+                                            : "Select HS Code"}
+                                        <Search className="ml-2 h-4 w-4 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-[420px] p-0" align="start">
@@ -222,12 +215,8 @@ export default function ManageTariffPage() {
                                                 {hsCodes.map((item) => (
                                                     <CommandItem
                                                         key={item.hsCode}
-                                                        value={item.hsCode}
                                                         onSelect={() => {
-                                                            setNewTariff({
-                                                                ...newTariff,
-                                                                hsCode: item,
-                                                            });
+                                                            setNewTariff({ ...newTariff, hsCode: item });
                                                             setOpenHS(false);
                                                         }}
                                                     >
@@ -253,10 +242,7 @@ export default function ManageTariffPage() {
                                     type="number"
                                     value={newTariff.baseRate || ""}
                                     onChange={(e) =>
-                                        setNewTariff({
-                                            ...newTariff,
-                                            baseRate: parseFloat(e.target.value),
-                                        })
+                                        setNewTariff({ ...newTariff, baseRate: parseFloat(e.target.value) })
                                     }
                                     className="h-11"
                                 />
@@ -265,9 +251,7 @@ export default function ManageTariffPage() {
                                 <Label>Rate Type</Label>
                                 <Input
                                     value={newTariff.rateType || ""}
-                                    onChange={(e) =>
-                                        setNewTariff({ ...newTariff, rateType: e.target.value })
-                                    }
+                                    onChange={(e) => setNewTariff({ ...newTariff, rateType: e.target.value })}
                                     className="h-11"
                                 />
                             </div>
@@ -276,9 +260,7 @@ export default function ManageTariffPage() {
                                 <Input
                                     type="date"
                                     value={newTariff.effectiveDate || ""}
-                                    onChange={(e) =>
-                                        setNewTariff({ ...newTariff, effectiveDate: e.target.value })
-                                    }
+                                    onChange={(e) => setNewTariff({ ...newTariff, effectiveDate: e.target.value })}
                                     className="h-11"
                                 />
                             </div>
@@ -287,31 +269,106 @@ export default function ManageTariffPage() {
                                 <Input
                                     type="date"
                                     value={newTariff.expiryDate || ""}
-                                    onChange={(e) =>
-                                        setNewTariff({ ...newTariff, expiryDate: e.target.value })
-                                    }
+                                    onChange={(e) => setNewTariff({ ...newTariff, expiryDate: e.target.value })}
                                     className="h-11"
                                 />
                             </div>
+
+                            {/* ORIGINS */}
                             <div className="space-y-2">
                                 <Label>Origin Countries</Label>
-                                <Input
-                                    placeholder="Comma-separated (e.g. China, Japan)"
-                                    onChange={(e) =>
-                                        setNewTariff({ ...newTariff, origins: e.target.value })
-                                    }
-                                    className="h-11"
-                                />
+                                <Popover open={openOrigin} onOpenChange={setOpenOrigin}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-between h-11 text-left">
+                                            {newTariff.origins?.length
+                                                ? newTariff.origins.join(", ")
+                                                : "Select origins"}
+                                            <Search className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[300px] p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Search countries..." />
+                                            <CommandList>
+                                                <CommandEmpty>No countries found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {countries.map((c) => {
+                                                        const selected = newTariff.origins?.includes(c.name);
+                                                        return (
+                                                            <CommandItem
+                                                                key={c.name}
+                                                                onSelect={() =>
+                                                                    setNewTariff({
+                                                                        ...newTariff,
+                                                                        origins: toggleSelection(newTariff.origins, c.name),
+                                                                    })
+                                                                }
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        selected ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {c.name}
+                                                            </CommandItem>
+                                                        );
+                                                    })}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
+
+                            {/* DESTINATIONS */}
                             <div className="space-y-2">
                                 <Label>Destination Countries</Label>
-                                <Input
-                                    placeholder="Comma-separated (e.g. Singapore, Malaysia)"
-                                    onChange={(e) =>
-                                        setNewTariff({ ...newTariff, destinations: e.target.value })
-                                    }
-                                    className="h-11"
-                                />
+                                <Popover open={openDest} onOpenChange={setOpenDest}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-between h-11 text-left">
+                                            {newTariff.destinations?.length
+                                                ? newTariff.destinations.join(", ")
+                                                : "Select destinations"}
+                                            <Search className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[300px] p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Search countries..." />
+                                            <CommandList>
+                                                <CommandEmpty>No countries found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {countries.map((c) => {
+                                                        const selected = newTariff.destinations?.includes(c.name);
+                                                        return (
+                                                            <CommandItem
+                                                                key={c.name}
+                                                                onSelect={() =>
+                                                                    setNewTariff({
+                                                                        ...newTariff,
+                                                                        destinations: toggleSelection(
+                                                                            newTariff.destinations,
+                                                                            c.name
+                                                                        ),
+                                                                    })
+                                                                }
+                                                            >
+                                                                <Check
+                                                                    className={cn(
+                                                                        "mr-2 h-4 w-4",
+                                                                        selected ? "opacity-100" : "opacity-0"
+                                                                    )}
+                                                                />
+                                                                {c.name}
+                                                            </CommandItem>
+                                                        );
+                                                    })}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                         </div>
 
@@ -322,7 +379,7 @@ export default function ManageTariffPage() {
                         </div>
                     </div>
 
-                    {/* Table */}
+                    {/* === TABLE === */}
                     <div className="border rounded-md overflow-auto">
                         {loading ? (
                             <div className="flex justify-center py-8 text-muted-foreground">
@@ -340,11 +397,8 @@ export default function ManageTariffPage() {
                                 <tr className="bg-muted/50 text-muted-foreground uppercase text-[11px]">
                                     <th className="px-2 py-2 text-left">ID</th>
                                     <th className="px-2 py-2 text-left">HS Code</th>
-                                    <th className="px-2 py-2 text-left">Description</th>
                                     <th className="px-2 py-2 text-left">Rate</th>
                                     <th className="px-2 py-2 text-left">Type</th>
-                                    <th className="px-2 py-2 text-left">Effective</th>
-                                    <th className="px-2 py-2 text-left">Expiry</th>
                                     <th className="px-2 py-2 text-left">Origins</th>
                                     <th className="px-2 py-2 text-left">Destinations</th>
                                     <th className="px-2 py-2 text-center">Actions</th>
@@ -357,7 +411,6 @@ export default function ManageTariffPage() {
                                         <tr key={t.tariffId} className="border-t hover:bg-muted/40 transition">
                                             <td className="px-2 py-1.5">{t.tariffId}</td>
                                             <td className="px-2 py-1.5 font-mono">{t.hsCode.hsCode}</td>
-                                            <td className="px-2 py-1.5">{t.hsCode.description}</td>
                                             <td className="px-2 py-1.5">
                                                 {isEditing ? (
                                                     <Input
@@ -380,10 +433,7 @@ export default function ManageTariffPage() {
                                                     <Input
                                                         value={editedTariff.rateType ?? t.rateType}
                                                         onChange={(e) =>
-                                                            setEditedTariff({
-                                                                ...editedTariff,
-                                                                rateType: e.target.value,
-                                                            })
+                                                            setEditedTariff({ ...editedTariff, rateType: e.target.value })
                                                         }
                                                         className="h-7 text-xs"
                                                     />
@@ -391,37 +441,110 @@ export default function ManageTariffPage() {
                                                     t.rateType
                                                 )}
                                             </td>
-                                            <td className="px-2 py-1.5">{formatDate(t.effectiveDate)}</td>
-                                            <td className="px-2 py-1.5">{formatDate(t.expiryDate)}</td>
+
+                                            {/* Editable Origins */}
                                             <td className="px-2 py-1.5">
                                                 {isEditing ? (
-                                                    <Input
-                                                        value={editedTariff.origins ?? t.tariffOrigins.map((o) => o.country.name).join(", ")}
-                                                        onChange={(e) =>
-                                                            setEditedTariff({ ...editedTariff, origins: e.target.value })
-                                                        }
-                                                        className="h-7 text-xs"
-                                                    />
+                                                    <Popover open={openOriginEdit} onOpenChange={setOpenOriginEdit}>
+                                                        <PopoverTrigger asChild>
+                                                            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]">
+                                                                {editedTariff.origins?.length
+                                                                    ? editedTariff.origins.join(", ")
+                                                                    : "Select origins"}
+                                                            </Button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent className="w-[240px] p-0">
+                                                            <Command>
+                                                                <CommandInput placeholder="Search..." />
+                                                                <CommandList>
+                                                                    <CommandGroup>
+                                                                        {countries.map((c) => {
+                                                                            const selected = editedTariff.origins?.includes(c.name);
+                                                                            return (
+                                                                                <CommandItem
+                                                                                    key={c.name}
+                                                                                    onSelect={() =>
+                                                                                        setEditedTariff({
+                                                                                            ...editedTariff,
+                                                                                            origins: toggleSelection(
+                                                                                                editedTariff.origins,
+                                                                                                c.name
+                                                                                            ),
+                                                                                        })
+                                                                                    }
+                                                                                >
+                                                                                    <Check
+                                                                                        className={cn(
+                                                                                            "mr-2 h-4 w-4",
+                                                                                            selected ? "opacity-100" : "opacity-0"
+                                                                                        )}
+                                                                                    />
+                                                                                    {c.name}
+                                                                                </CommandItem>
+                                                                            );
+                                                                        })}
+                                                                    </CommandGroup>
+                                                                </CommandList>
+                                                            </Command>
+                                                        </PopoverContent>
+                                                    </Popover>
                                                 ) : (
                                                     t.tariffOrigins.map((o) => o.country.name).join(", ") || "—"
                                                 )}
                                             </td>
+
+                                            {/* Editable Destinations */}
                                             <td className="px-2 py-1.5">
                                                 {isEditing ? (
-                                                    <Input
-                                                        value={
-                                                            editedTariff.destinations ??
-                                                            t.tariffDestinations.map((d) => d.country.name).join(", ")
-                                                        }
-                                                        onChange={(e) =>
-                                                            setEditedTariff({ ...editedTariff, destinations: e.target.value })
-                                                        }
-                                                        className="h-7 text-xs"
-                                                    />
+                                                    <Popover open={openDestEdit} onOpenChange={setOpenDestEdit}>
+                                                        <PopoverTrigger asChild>
+                                                            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]">
+                                                                {editedTariff.destinations?.length
+                                                                    ? editedTariff.destinations.join(", ")
+                                                                    : "Select destinations"}
+                                                            </Button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent className="w-[240px] p-0">
+                                                            <Command>
+                                                                <CommandInput placeholder="Search..." />
+                                                                <CommandList>
+                                                                    <CommandGroup>
+                                                                        {countries.map((c) => {
+                                                                            const selected =
+                                                                                editedTariff.destinations?.includes(c.name);
+                                                                            return (
+                                                                                <CommandItem
+                                                                                    key={c.name}
+                                                                                    onSelect={() =>
+                                                                                        setEditedTariff({
+                                                                                            ...editedTariff,
+                                                                                            destinations: toggleSelection(
+                                                                                                editedTariff.destinations,
+                                                                                                c.name
+                                                                                            ),
+                                                                                        })
+                                                                                    }
+                                                                                >
+                                                                                    <Check
+                                                                                        className={cn(
+                                                                                            "mr-2 h-4 w-4",
+                                                                                            selected ? "opacity-100" : "opacity-0"
+                                                                                        )}
+                                                                                    />
+                                                                                    {c.name}
+                                                                                </CommandItem>
+                                                                            );
+                                                                        })}
+                                                                    </CommandGroup>
+                                                                </CommandList>
+                                                            </Command>
+                                                        </PopoverContent>
+                                                    </Popover>
                                                 ) : (
                                                     t.tariffDestinations.map((d) => d.country.name).join(", ") || "—"
                                                 )}
                                             </td>
+
                                             <td className="px-2 py-1.5 text-center">
                                                 <div className="flex gap-1 justify-center">
                                                     {isEditing ? (
@@ -453,8 +576,12 @@ export default function ManageTariffPage() {
                                                                     setEditingId(t.tariffId!);
                                                                     setEditedTariff({
                                                                         ...t,
-                                                                        origins: t.tariffOrigins.map((o) => o.country.name).join(", "),
-                                                                        destinations: t.tariffDestinations.map((d) => d.country.name).join(", "),
+                                                                        origins: t.tariffOrigins.map(
+                                                                            (o) => o.country.name
+                                                                        ),
+                                                                        destinations: t.tariffDestinations.map(
+                                                                            (d) => d.country.name
+                                                                        ),
                                                                     });
                                                                 }}
                                                             >
