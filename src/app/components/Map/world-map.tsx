@@ -95,21 +95,20 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center">
-      <div
-        data-tooltip-id="map-tooltip"
-        data-tooltip-html={tooltipContent}
-        className="w-full h-full flex items-center justify-center"
-      >
-        <ComposableMap
-          projectionConfig={{ scale: 150 }}
-          width={980}
-          height={551}
-          style={{
-            width: "100%",
-            height: "auto",
-            maxHeight: "80vh",
-          }}
+     <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
+  <div
+    data-tooltip-id="map-tooltip"
+    data-tooltip-html={tooltipContent}
+    className="absolute inset-0 flex items-center justify-center"
+  >
+    <ComposableMap
+      projectionConfig={{ scale: 150 }}
+      width={980}
+      height={551}
+      style={{
+        width: "100%",
+        height: "100%",
+      }}
         >
           <Geographies geography={geoUrl}>
             {({ geographies }) =>
