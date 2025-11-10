@@ -6,7 +6,7 @@ import { Tooltip } from "react-tooltip";
 import { CountryDetail } from "./country-detail";
 import { Feature } from "geojson";
 
-const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+const geoUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/world-110m.json";
 
 interface CountryData {
   id: number;
@@ -27,7 +27,7 @@ interface WorldMapProps {
   tradeAgreements: TradeAgreement[];
 }
 
-type CountryFeature = Feature & { properties: { name: string } };
+type CountryFeature = Feature & { properties: { name?: string } };
 
 const COUNTRY_NAME_MAP: Record<string, string> = {
   "United States of America": "United States",
@@ -50,10 +50,10 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     agreements: TradeAgreement[];
   } | null>(null);
 
-  const normalizeCountryName = (geoName: string) =>
-    COUNTRY_NAME_MAP[geoName] || geoName;
+  const normalizeCountryName = (geoName?: string) =>
+    geoName ? COUNTRY_NAME_MAP[geoName] || geoName : "";
 
-  const getTradeAgreements = (countryName: string) => {
+  const getTradeAgreements = (countryName?: string) => {
     const normalized = normalizeCountryName(countryName);
     return tradeAgreements.filter(
       (t) =>
@@ -67,10 +67,9 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     const agreements = getTradeAgreements(geoName);
     const count = agreements.length;
 
-    if (count >= 10) return "#0047AB";
-    if (count >= 6) return "#1976D2";
-    if (count >= 3) return "#64B5F6";
-    if (count >= 1) return "#BBDEFB";
+    if (count >= 25) return "#0047AB";
+    if (count >= 5) return "#1976D2";
+    if (count >= 1) return "#64B5F6";
     return "#E0E0E0";
   };
 
@@ -78,7 +77,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     const geoName = geo.properties.name;
     const agreements = getTradeAgreements(geoName);
     setTooltipContent(
-      `<strong>${geoName}</strong><br/>${agreements.length} ${
+      `<strong>${geoName || "Unknown"}</strong><br/>${agreements.length} ${
         agreements.length === 1 ? "agreement" : "agreements"
       }`
     );
@@ -89,7 +88,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   const handleCountryClick = (geo: CountryFeature) => {
     const geoName = geo.properties.name;
     const agreements = getTradeAgreements(geoName);
-    setSelectedCountry({ name: geoName, agreements });
+    setSelectedCountry({ name: geoName || "Unknown", agreements });
   };
 
   return (
@@ -98,15 +97,18 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
         data-tooltip-id="map-tooltip"
         data-tooltip-html={tooltipContent}
         className="w-full flex items-center justify-center"
+        style={{
+          aspectRatio: "2 / 1", // Ensures consistent height across screens
+          maxWidth: "1200px",
+          width: "100%",
+        }}
       >
         <ComposableMap
-          projectionConfig={{ scale: 150 }}
-          viewBox="0 0 980 551"
-          preserveAspectRatio="xMidYMid meet"
+          projectionConfig={{ scale: 160, center: [0, 20] }}
+          preserveAspectRatio="xMidYMid"
           style={{
             width: "100%",
-            height: "auto",
-            maxHeight: "80vh",
+            height: "100%",
           }}
         >
           <Geographies geography={geoUrl}>
