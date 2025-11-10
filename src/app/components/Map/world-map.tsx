@@ -67,10 +67,11 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     const agreements = getTradeAgreements(geoName);
     const count = agreements.length;
 
-    if (count >= 25) return "#0047AB";
-    if (count >= 5) return "#1976D2";
-    if (count >= 1) return "#64B5F6";
-    return "#E0E0E0";
+    if (count >= 10) return "#0047AB";       // Dark blue
+    if (count >= 6) return "#1976D2";        // Medium blue
+    if (count >= 3) return "#64B5F6";        // Light blue
+    if (count >= 1) return "#BBDEFB";        // Very light blue
+    return "#E0E0E0";                        // White
   };
 
   const handleMouseEnter = (geo: CountryFeature) => {
@@ -98,9 +99,9 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
         data-tooltip-html={tooltipContent}
         className="w-full flex items-center justify-center"
         style={{
-          aspectRatio: "2 / 1", // Ensures consistent height across screens
-          maxWidth: "1200px",
           width: "100%",
+          height: "calc(100vh - 100px)", // Adjust if you have headers
+          overflow: "hidden",
         }}
       >
         <ComposableMap
