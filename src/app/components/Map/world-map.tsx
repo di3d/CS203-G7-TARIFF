@@ -46,19 +46,18 @@ const COUNTRY_NAME_MAP: Record<string, string> = {
 export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   const [tooltipContent, setTooltipContent] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<{
-    name: string;
+    countryName: string;
     agreements: TradeAgreement[];
   } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapWidth, setMapWidth] = useState(980);
 
-  // ✅ Dynamically resize map (no pixel ratio multiplier)
+  // ✅ Dynamically resize map based on container width
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
         const newWidth = containerRef.current.getBoundingClientRect().width;
-
         if (newWidth < 500) setMapWidth(420);
         else if (newWidth < 900) setMapWidth(700);
         else setMapWidth(980);
@@ -102,8 +101,10 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   const handleCountryClick = (geo: CountryFeature) => {
     const geoName = geo.properties.name;
     const agreements = getTradeAgreements(geoName);
-    setSelectedCountry({ name: geoName, agreements });
+    setSelectedCountry({ countryName: geoName, agreements });
   };
+
+  const handleCloseDetail = () => setSelectedCountry(null);
 
   return (
     <div ref={containerRef} className="w-full flex flex-col items-center">
@@ -133,12 +134,11 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
       <Tooltip id="tooltip" />
 
       {selectedCountry && (
-        <div className="mt-4 w-full max-w-2xl">
-          <CountryDetail
-            name={selectedCountry.name}
-            agreements={selectedCountry.agreements}
-          />
-        </div>
+        <CountryDetail
+          countryName={selectedCountry.countryName}
+          agreements={selectedCountry.agreements}
+          onClose={handleCloseDetail}
+        />
       )}
     </div>
   );
