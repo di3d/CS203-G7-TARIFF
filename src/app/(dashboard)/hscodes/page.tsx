@@ -8,13 +8,21 @@ import {
     CardContent,
 } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
-import { Label } from "@/app/components/ui/label";
 import { Loader2, Search, FileSearch } from "lucide-react";
 import { api } from "@/lib/api";
+
+interface Section {
+    id: number;
+    code: string;
+    name: string;
+}
 
 interface HsCode {
     hsCode: string;
     description: string;
+    parent?: string;
+    level?: string;
+    section?: Section | null;
 }
 
 export default function HsCodeViewerPage() {
@@ -31,8 +39,8 @@ export default function HsCodeViewerPage() {
                 const { data } = await api.get<HsCode[]>("/hscodes");
                 setCodes(data);
                 setFiltered(data);
-            } catch {
-                console.error("Failed to load HS codes");
+            } catch (e) {
+                console.error("Failed to load HS codes:", e);
             } finally {
                 setLoading(false);
             }
@@ -45,7 +53,9 @@ export default function HsCodeViewerPage() {
         const result = codes.filter(
             (c) =>
                 c.hsCode.toLowerCase().includes(q) ||
-                c.description.toLowerCase().includes(q)
+                c.description.toLowerCase().includes(q) ||
+                (c.section?.code?.toLowerCase().includes(q) ||
+                    c.section?.name?.toLowerCase().includes(q))
         );
         setFiltered(result);
         setPage(1);
@@ -59,7 +69,7 @@ export default function HsCodeViewerPage() {
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">HS Codes</h1>
                 <p className="text-muted-foreground">
-                    Browse all available Harmonized System (HS) codes
+                    Browse all Harmonized System (HS) codes — searchable and paginated
                 </p>
             </div>
 
@@ -72,24 +82,24 @@ export default function HsCodeViewerPage() {
                 </CardHeader>
 
                 <CardContent className="pt-6 space-y-4">
+                    {/* === Search Bar === */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="space-y-1 w-full sm:w-1/2">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input
-                                    id="search"
-                                    placeholder="Search by HS code or description..."
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    className="pl-9 h-11"
-                                />
-                            </div>
+                        <div className="relative w-full sm:w-1/2">
+                            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                id="search"
+                                placeholder="Search by HS code, description, or section..."
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                className="pl-9 h-11"
+                            />
                         </div>
                         <p className="text-sm text-muted-foreground">
                             Showing {paginated.length} of {filtered.length} results
                         </p>
                     </div>
 
+                    {/* === Table === */}
                     <div className="border rounded-md overflow-auto max-h-[70vh]">
                         {loading ? (
                             <div className="flex justify-center items-center py-10 text-muted-foreground">
@@ -100,8 +110,11 @@ export default function HsCodeViewerPage() {
                             <table className="w-full text-sm">
                                 <thead>
                                 <tr className="bg-muted/50 text-muted-foreground uppercase text-xs">
-                                    <th className="px-3 py-2 text-left w-32">HS Code</th>
+                                    <th className="px-3 py-2 text-left w-28">HS Code</th>
                                     <th className="px-3 py-2 text-left">Description</th>
+                                    <th className="px-3 py-2 text-left w-20">Level</th>
+                                    <th className="px-3 py-2 text-left w-32">Parent</th>
+                                    <th className="px-3 py-2 text-left w-48">Section</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -113,12 +126,23 @@ export default function HsCodeViewerPage() {
                                         >
                                             <td className="px-3 py-2 font-mono">{item.hsCode}</td>
                                             <td className="px-3 py-2">{item.description}</td>
+                                            <td className="px-3 py-2">{item.level ?? "—"}</td>
+                                            <td className="px-3 py-2">
+                                                {item.parent && item.parent !== "TOTAL"
+                                                    ? item.parent
+                                                    : "—"}
+                                            </td>
+                                            <td className="px-3 py-2">
+                                                {item.section
+                                                    ? `${item.section.code} — ${item.section.name}`
+                                                    : "—"}
+                                            </td>
                                         </tr>
                                     ))
                                 ) : (
                                     <tr>
                                         <td
-                                            colSpan={2}
+                                            colSpan={5}
                                             className="text-center py-6 text-muted-foreground"
                                         >
                                             No HS codes found
@@ -130,6 +154,7 @@ export default function HsCodeViewerPage() {
                         )}
                     </div>
 
+                    {/* === Pagination === */}
                     {totalPages > 1 && (
                         <div className="flex justify-center gap-2 pt-4">
                             <button

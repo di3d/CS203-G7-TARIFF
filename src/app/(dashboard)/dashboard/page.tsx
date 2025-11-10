@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import TradeAgreementsCard from "@/app/components/TradeAgreementsCard";
 import { TariffViewer } from "@/app/components/TariffViewer";
 import { api } from "@/lib/api";
+import HSCodeBreakdownChart from "@/app/components/visualisations/HSCodeBreakdownChart";
 
 type Tariff = {
     id: number;
@@ -77,6 +78,7 @@ export default function DashboardPage() {
             </div>
             <TradeAgreementsCard />
             <TariffViewer />
+            <HSCodeBreakdownChart/>
         </div>
     );
 }

@@ -1,7 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/app/components/ui/card";
+import { useEffect, useState } from "react";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardContent,
+} from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Button } from "@/app/components/ui/button";
 import {
@@ -15,11 +20,20 @@ import {
     AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import {api} from "@/lib/api";
+import { api } from "@/lib/api";
+
+interface Section {
+    id: number;
+    code: string;
+    name: string;
+}
 
 interface HsCode {
     hsCode: string;
     description: string;
+    parent?: string;
+    level?: string;
+    section?: Section | null;
 }
 
 export default function ManageHsCodes() {
@@ -31,9 +45,13 @@ export default function ManageHsCodes() {
     const [newCode, setNewCode] = useState<HsCode>({
         hsCode: "",
         description: "",
+        parent: "",
+        level: "",
+        section: null,
     });
 
-    const fetchHsCodes = async (): Promise<void> => {
+    // === Fetch all HS codes ===
+    const fetchHsCodes = async () => {
         try {
             setLoading(true);
             const { data } = await api.get<HsCode[]>("/hscodes");
@@ -50,25 +68,33 @@ export default function ManageHsCodes() {
         void fetchHsCodes();
     }, []);
 
-    const handleCreate = async (): Promise<void> => {
+    // === Create ===
+    const handleCreate = async () => {
         if (!newCode.hsCode.trim() || !newCode.description.trim()) {
-            toast.error("Please fill both HS code and description.");
+            toast.error("HS Code and description are required.");
             return;
         }
         try {
-            await api.post("/hscodes", newCode);
-            toast.success("HS Code added successfully.");
-            setNewCode({ hsCode: "", description: "" });
+            await api.post("/api/hscodes", newCode);
+            toast.success("HS Code added.");
+            setNewCode({
+                hsCode: "",
+                description: "",
+                parent: "",
+                level: "",
+                section: null,
+            });
             await fetchHsCodes();
         } catch {
             toast.error("Unable to create HS Code.");
         }
     };
 
-    const handleSave = async (): Promise<void> => {
+    // === Update ===
+    const handleSave = async () => {
         if (!editing) return;
         try {
-            await api.put(`/hscodes/${editing}`, edited);
+            await api.put(`/api/hscodes/${editing}`, edited);
             toast.success("HS Code updated.");
             setEditing(null);
             await fetchHsCodes();
@@ -77,10 +103,11 @@ export default function ManageHsCodes() {
         }
     };
 
-    const handleDelete = async (code: string): Promise<void> => {
+    // === Delete ===
+    const handleDelete = async (code: string) => {
         if (!confirm(`Delete HS Code ${code}?`)) return;
         try {
-            await api.delete(`/hscodes/${code}`);
+            await api.delete(`/api/hscodes/${code}`);
             toast.success("HS Code deleted.");
             await fetchHsCodes();
         } catch {
@@ -88,6 +115,7 @@ export default function ManageHsCodes() {
         }
     };
 
+    // === Render ===
     return (
         <Card>
             <CardHeader>
@@ -110,9 +138,11 @@ export default function ManageHsCodes() {
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        <div className="flex gap-2">
+                        {/* Add new HS code */}
+                        <div className="flex flex-wrap gap-2">
                             <Input
                                 placeholder="HS Code"
+                                className="w-24"
                                 value={newCode.hsCode}
                                 onChange={(e) =>
                                     setNewCode({ ...newCode, hsCode: e.target.value })
@@ -120,9 +150,42 @@ export default function ManageHsCodes() {
                             />
                             <Input
                                 placeholder="Description"
+                                className="flex-1 min-w-[200px]"
                                 value={newCode.description}
                                 onChange={(e) =>
                                     setNewCode({ ...newCode, description: e.target.value })
+                                }
+                            />
+                            <Input
+                                placeholder="Parent (optional)"
+                                className="w-24"
+                                value={newCode.parent ?? ""}
+                                onChange={(e) =>
+                                    setNewCode({ ...newCode, parent: e.target.value })
+                                }
+                            />
+                            <Input
+                                placeholder="Level (2/4/6)"
+                                className="w-20"
+                                value={newCode.level ?? ""}
+                                onChange={(e) =>
+                                    setNewCode({ ...newCode, level: e.target.value })
+                                }
+                            />
+                            <Input
+                                placeholder="Section code (e.g. XVI)"
+                                className="w-24"
+                                value={
+                                    newCode.section?.code ??
+                                    (typeof newCode.section === "string"
+                                        ? newCode.section
+                                        : "")
+                                }
+                                onChange={(e) =>
+                                    setNewCode({
+                                        ...newCode,
+                                        section: { id: 0, code: e.target.value, name: "" },
+                                    })
                                 }
                             />
                             <Button onClick={handleCreate}>
@@ -131,12 +194,16 @@ export default function ManageHsCodes() {
                             </Button>
                         </div>
 
+                        {/* Table */}
                         <div className="border rounded-md overflow-auto">
                             <table className="w-full text-xs">
                                 <thead>
                                 <tr className="bg-muted/50 text-muted-foreground uppercase text-[11px]">
                                     <th className="px-2 py-2 text-left">HS Code</th>
                                     <th className="px-2 py-2 text-left">Description</th>
+                                    <th className="px-2 py-2 text-left">Section</th>
+                                    <th className="px-2 py-2 text-left">Parent</th>
+                                    <th className="px-2 py-2 text-left">Level</th>
                                     <th className="px-2 py-2 text-center">Actions</th>
                                 </tr>
                                 </thead>
@@ -144,10 +211,7 @@ export default function ManageHsCodes() {
                                 <tbody>
                                 {codes.map((c) =>
                                     editing === c.hsCode ? (
-                                        <tr
-                                            key={c.hsCode}
-                                            className="border-t bg-muted/30 transition"
-                                        >
+                                        <tr key={c.hsCode} className="border-t bg-muted/30">
                                             <td className="px-2 py-1.5 font-mono">{c.hsCode}</td>
                                             <td className="px-2 py-1.5">
                                                 <Input
@@ -157,6 +221,42 @@ export default function ManageHsCodes() {
                                                             ...edited,
                                                             description: e.target.value,
                                                         })
+                                                    }
+                                                />
+                                            </td>
+                                            <td className="px-2 py-1.5">
+                                                <Input
+                                                    value={
+                                                        !edited.section
+                                                            ? ""
+                                                            : typeof edited.section === "object"
+                                                                ? edited.section.code ?? ""
+                                                                : edited.section
+                                                    }
+                                                    onChange={(e) => {
+                                                        const code = e.target.value;
+                                                        setEdited({
+                                                            ...edited,
+                                                            section: code
+                                                                ? { id: 0, code, name: "" }
+                                                                : null,
+                                                        });
+                                                    }}
+                                                />
+                                            </td>
+                                            <td className="px-2 py-1.5">
+                                                <Input
+                                                    value={edited.parent ?? ""}
+                                                    onChange={(e) =>
+                                                        setEdited({ ...edited, parent: e.target.value })
+                                                    }
+                                                />
+                                            </td>
+                                            <td className="px-2 py-1.5">
+                                                <Input
+                                                    value={edited.level ?? ""}
+                                                    onChange={(e) =>
+                                                        setEdited({ ...edited, level: e.target.value })
                                                     }
                                                 />
                                             </td>
@@ -188,6 +288,13 @@ export default function ManageHsCodes() {
                                         >
                                             <td className="px-2 py-1.5 font-mono">{c.hsCode}</td>
                                             <td className="px-2 py-1.5">{c.description}</td>
+                                            <td className="px-2 py-1.5">
+                                                {c.section
+                                                    ? `${c.section.code} — ${c.section.name}`
+                                                    : "—"}
+                                            </td>
+                                            <td className="px-2 py-1.5">{c.parent ?? "—"}</td>
+                                            <td className="px-2 py-1.5">{c.level ?? "—"}</td>
                                             <td className="px-2 py-1.5 text-center">
                                                 <div className="flex justify-center gap-1">
                                                     <Button
