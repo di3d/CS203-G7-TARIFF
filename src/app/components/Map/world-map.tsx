@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { Tooltip } from "react-tooltip";
 import { CountryDetail } from "./country-detail";
@@ -50,6 +50,54 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     agreements: TradeAgreement[];
   } | null>(null);
 
+  // Responsive scale: measure container width and compute a projection scale
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [mapScale, setMapScale] = useState<number>(160);
+
+  useEffect(() => {
+    const computeScale = (width: number) => {
+      // Based on previous default: scale 160 for ~1200px container
+      // Use a proportional formula with sensible min/max limits
+      const scale = Math.round(Math.max(80, Math.min(260, width / 7.5)));
+      setMapScale(scale);
+    };
+
+    const el = containerRef.current;
+
+    if (!el) {
+      // fallback to window size
+      computeScale(window.innerWidth);
+      const onResize = () => computeScale(window.innerWidth);
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
+    }
+
+    // Use ResizeObserver when available for more accurate container sizing
+    let ro: ResizeObserver | null = null;
+    try {
+      ro = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const w = entry.contentRect.width || el.getBoundingClientRect().width;
+          computeScale(w);
+        }
+      });
+      ro.observe(el);
+      // initialize
+      computeScale(el.getBoundingClientRect().width);
+    } catch (e) {
+      // ResizeObserver not supported; fallback to window resize
+      computeScale(el.getBoundingClientRect().width || window.innerWidth);
+      const onResize = () => computeScale(el.getBoundingClientRect().width || window.innerWidth);
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
+    }
+
+    return () => {
+      if (ro && el) ro.unobserve(el);
+      ro = null;
+    };
+  }, []);
+
   const normalizeCountryName = (geoName?: string) =>
     geoName ? COUNTRY_NAME_MAP[geoName] || geoName : "";
 
@@ -67,11 +115,10 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     const agreements = getTradeAgreements(geoName);
     const count = agreements.length;
 
-    if (count >= 10) return "#0047AB";       // Dark blue
-    if (count >= 6) return "#1976D2";        // Medium blue
-    if (count >= 3) return "#64B5F6";        // Light blue
-    if (count >= 1) return "#BBDEFB";        // Very light blue
-    return "#E0E0E0";                        // White
+    if (count >= 25) return "#0047AB";
+    if (count >= 5) return "#1976D2";
+    if (count >= 1) return "#64B5F6";
+    return "#E0E0E0";
   };
 
   const handleMouseEnter = (geo: CountryFeature) => {
@@ -95,17 +142,18 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   return (
     <div className="w-full flex flex-col items-center justify-center">
       <div
+        ref={containerRef}
         data-tooltip-id="map-tooltip"
         data-tooltip-html={tooltipContent}
         className="w-full flex items-center justify-center"
         style={{
+          aspectRatio: "2 / 1", // Ensures consistent height across screens
+          maxWidth: "1200px",
           width: "100%",
-          height: "calc(100vh - 100px)", // Adjust if you have headers
-          overflow: "hidden",
         }}
       >
         <ComposableMap
-          projectionConfig={{ scale: 160, center: [0, 20] }}
+          projectionConfig={{ scale: mapScale, center: [0, 20] }}
           preserveAspectRatio="xMidYMid"
           style={{
             width: "100%",
@@ -113,8 +161,8 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
           }}
         >
           <Geographies geography={geoUrl}>
-            {({ geographies }) =>
-              geographies.map((geo) => (
+            {({ geographies }: { geographies: any[] }) =>
+              geographies.map((geo: any) => (
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
