@@ -97,7 +97,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
       <div
         data-tooltip-id="map-tooltip"
         data-tooltip-html={tooltipContent}
-        className="w-full flex items-center justify-center"
+  className="w-full flex items-start justify-center"
       >
         <ComposableMap
           projectionConfig={{ scale: 150 }}
