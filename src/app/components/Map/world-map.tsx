@@ -112,9 +112,8 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
       <ComposableMap
         projection="geoEqualEarth"
         projectionConfig={{
-          scale: mapWidth / 2.8,
-          center: [10, 15],
-          translate: [mapWidth / 2, mapWidth / 3],
+          scale: mapWidth / 2.9,
+          center: [10, 10], // balanced centering for all screens
         }}
         width={mapWidth}
         height={mapWidth * 0.55}
