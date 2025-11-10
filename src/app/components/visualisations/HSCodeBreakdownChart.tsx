@@ -11,6 +11,7 @@ import {
     Tooltip,
     Legend,
     CartesianGrid,
+    TooltipProps,
 } from "recharts";
 import {
     Card,
@@ -27,25 +28,28 @@ import {
 } from "@/app/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { api } from "@/lib/api";
+import { NameType, ValueType } from "recharts/types/component/DefaultTooltipContent";
 
-type HSSectionRow = {
+interface HSSectionRow {
     section: string;
     name: string;
     avgRate: number;
     productCount: number;
-};
+}
+
+interface HSCodeBreakdownChartProps {
+    title?: string;
+    originId?: number;
+    destId?: number;
+    agreementId?: number | null;
+}
 
 export default function HSCodeBreakdownChart({
                                                  title = "HS Section Tariff Breakdown",
                                                  originId,
                                                  destId,
                                                  agreementId,
-                                             }: {
-    title?: string;
-    originId?: number;
-    destId?: number;
-    agreementId?: number | null;
-}) {
+                                             }: HSCodeBreakdownChartProps) {
     const [rows, setRows] = useState<HSSectionRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -74,18 +78,18 @@ export default function HSCodeBreakdownChart({
             };
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchData = async (): Promise<void> => {
             setLoading(true);
             setError(null);
             try {
-                const params: Record<string, any> = {};
+                const params: Record<string, unknown> = {};
                 if (originId) params.originId = originId;
                 if (destId) params.destId = destId;
                 if (agreementId) params.agreementId = agreementId;
 
                 const res = await api.get<HSSectionRow[]>("/hs/sections/breakdown", { params });
                 setRows(res.data ?? []);
-            } catch (e) {
+            } catch {
                 setError("Failed to fetch data from backend.");
             } finally {
                 setLoading(false);
@@ -99,12 +103,26 @@ export default function HSCodeBreakdownChart({
         return [...filtered].sort((a, b) => (b[sortKey] as number) - (a[sortKey] as number));
     }, [rows, sortKey, minCount]);
 
+    // Tooltip typing
+    const customFormatter: TooltipProps<ValueType, NameType>["formatter"] = (
+        value,
+        name,
+        entry
+    ) => {
+        const val = typeof value === "number" ? value : Number(value);
+        const row = entry?.payload as HSSectionRow;
+        if (name === "Avg Tariff") {
+            return [`${val.toFixed(2)}%`, `${row.name}`];
+        }
+        return [val, `${row.name}`];
+    };
+
     return (
         <Card className="w-full">
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <CardTitle className="text-lg font-semibold">{title}</CardTitle>
                 <div className="flex gap-2">
-                    <Select value={sortKey} onValueChange={(v) => setSortKey(v as any)}>
+                    <Select value={sortKey} onValueChange={(v) => setSortKey(v as "avgRate" | "productCount")}>
                         <SelectTrigger className="w-44">
                             <SelectValue placeholder="Sort by" />
                         </SelectTrigger>
@@ -183,11 +201,7 @@ export default function HSCodeBreakdownChart({
                                 }}
                             />
                             <Tooltip
-                                formatter={(val: any, name: string, entry: any) =>
-                                    name === "Avg Tariff"
-                                        ? [`${val.toFixed(2)}%`, `${entry.payload.name}`]
-                                        : [val, `${entry.payload.name}`]
-                                }
+                                formatter={customFormatter}
                                 contentStyle={{
                                     backgroundColor: colors.tooltipBg,
                                     color: colors.tooltipText,
