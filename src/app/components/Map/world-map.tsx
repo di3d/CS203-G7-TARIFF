@@ -84,9 +84,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     );
   };
 
-  const handleMouseLeave = () => {
-    setTooltipContent("");
-  };
+  const handleMouseLeave = () => setTooltipContent("");
 
   const handleCountryClick = (geo: CountryFeature) => {
     const geoName = geo.properties.name;
@@ -95,20 +93,21 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   };
 
   return (
-     <div className="relative w-full" style={{ aspectRatio: "16/9" }}>
-  <div
-    data-tooltip-id="map-tooltip"
-    data-tooltip-html={tooltipContent}
-    className="absolute inset-0 flex items-center justify-center"
-  >
-    <ComposableMap
-      projectionConfig={{ scale: 150 }}
-      width={980}
-      height={551}
-      style={{
-        width: "100%",
-        height: "100%",
-      }}
+    <div className="w-full flex flex-col items-center justify-center">
+      <div
+        data-tooltip-id="map-tooltip"
+        data-tooltip-html={tooltipContent}
+        className="w-full flex items-center justify-center"
+      >
+        <ComposableMap
+          projectionConfig={{ scale: 150 }}
+          viewBox="0 0 980 551"
+          preserveAspectRatio="xMidYMid meet"
+          style={{
+            width: "100%",
+            height: "auto",
+            maxHeight: "80vh",
+          }}
         >
           <Geographies geography={geoUrl}>
             {({ geographies }) =>
