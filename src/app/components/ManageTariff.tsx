@@ -499,6 +499,8 @@ export default function ManageTariffPage() {
                                     <th className="px-2 py-2 text-left">HS Code</th>
                                     <th className="px-2 py-2 text-left">Rate</th>
                                     <th className="px-2 py-2 text-left">Type</th>
+                                    <th className="px-2 py-2 text-left">Effective</th>
+                                    <th className="px-2 py-2 text-left">Expiry</th>
                                     <th className="px-2 py-2 text-left">Origins</th>
                                     <th className="px-2 py-2 text-left">Destinations</th>
                                     <th className="px-2 py-2 text-center">Actions</th>
@@ -549,6 +551,37 @@ export default function ManageTariffPage() {
                                                     t.rateType
                                                 )}
                                             </td>
+
+                                            <td className="px-2 py-1.5">
+                                                {isEditing ? (
+                                                    <Input
+                                                        type="date"
+                                                        value={editedTariff.effectiveDate ?? t.effectiveDate}
+                                                        onChange={(e) =>
+                                                            setEditedTariff({ ...editedTariff, effectiveDate: e.target.value })
+                                                        }
+                                                        className="h-7 text-xs"
+                                                    />
+                                                ) : (
+                                                    formatDate(t.effectiveDate)
+                                                )}
+                                            </td>
+
+                                            <td className="px-2 py-1.5">
+                                                {isEditing ? (
+                                                    <Input
+                                                        type="date"
+                                                        value={editedTariff.expiryDate ?? t.expiryDate ?? ""}
+                                                        onChange={(e) =>
+                                                            setEditedTariff({ ...editedTariff, expiryDate: e.target.value })
+                                                        }
+                                                        className="h-7 text-xs"
+                                                    />
+                                                ) : (
+                                                    formatDate(t.expiryDate)
+                                                )}
+                                            </td>
+
 
                                             {/* Editable Origins */}
                                             <td className="px-2 py-1.5">

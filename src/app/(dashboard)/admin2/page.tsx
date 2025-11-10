@@ -14,8 +14,9 @@ export default function AdminPage() {
         const storedIdToken = localStorage.getItem("token"); // idToken saved as "token"
         const storedRole = localStorage.getItem("role");
 
-        console.log("DEBUG token:", storedIdToken ? "exists ✅" : "missing ❌");
-        console.log("DEBUG role:", storedRole);
+        // For debugging only - leave commented out in production
+        // console.log("DEBUG token:", storedIdToken ? "exists ✅" : "missing ❌");
+        // console.log("DEBUG role:", storedRole);
 
         if (!storedIdToken || storedRole !== "Admin") {
             router.replace("/"); // redirect if not logged in or not admin
