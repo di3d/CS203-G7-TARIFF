@@ -60,6 +60,14 @@ interface Tariff {
     tariffDestinations: { country: Country }[];
 }
 
+interface AxiosErrorShape {
+    response?: {
+        data?: {
+            error?: string;
+        };
+    };
+}
+
 type EditableTariff = Partial<Tariff> & {
     origins?: string[];
     destinations?: string[];
@@ -121,11 +129,21 @@ export default function ManageTariffPage() {
         list.includes(value) ? list.filter((v) => v !== value) : [...list, value];
 
     const handleCreate = async () => {
+        const overlap = newTariff.origins?.some((o) =>
+            newTariff.destinations?.includes(o),
+        );
+        if (overlap) {
+            toast.error("Origin and destination cannot be the same country.");
+            return;
+        }
+
         try {
             const payload: Tariff = {
                 ...(newTariff as Tariff),
-                tariffOrigins: newTariff.origins?.map((n) => ({ country: { name: n } })) ?? [],
-                tariffDestinations: newTariff.destinations?.map((n) => ({ country: { name: n } })) ?? [],
+                tariffOrigins:
+                    newTariff.origins?.map((name) => ({ country: { name } })) ?? [],
+                tariffDestinations:
+                    newTariff.destinations?.map((name) => ({ country: { name } })) ?? [],
             };
             await api.post("/tariffs", payload);
             toast.success("Tariff created.");
@@ -139,25 +157,51 @@ export default function ManageTariffPage() {
                 destinations: [],
             });
             await refreshTariffs();
-        } catch {
-            toast.error("Failed to create tariff.");
+        } catch (err: unknown) {
+            let msg = "Failed to create tariff.";
+
+            if (typeof err === "object" && err !== null && "response" in err) {
+                const axiosErr = err as AxiosErrorShape;
+                msg = axiosErr.response?.data?.error ?? msg;
+            }
+
+            toast.error(msg);
         }
     };
 
     const handleSave = async () => {
         if (!editingId) return;
+
+        const overlap = editedTariff.origins?.some((o) =>
+            editedTariff.destinations?.includes(o),
+        );
+        if (overlap) {
+            toast.error("Origin and destination cannot be the same country.");
+            return;
+        }
+
         try {
             const payload: Tariff = {
                 ...(editedTariff as Tariff),
-                tariffOrigins: editedTariff.origins?.map((n) => ({ country: { name: n } })) ?? [],
-                tariffDestinations: editedTariff.destinations?.map((n) => ({ country: { name: n } })) ?? [],
+                tariffOrigins:
+                    editedTariff.origins?.map((name) => ({ country: { name } })) ?? [],
+                tariffDestinations:
+                    editedTariff.destinations?.map((name) => ({ country: { name } })) ??
+                    [],
             };
             await api.put(`/tariffs/${editingId}`, payload);
             toast.success("Tariff updated.");
             setEditingId(null);
             await refreshTariffs();
-        } catch {
-            toast.error("Failed to update tariff.");
+        } catch (err: unknown) {
+            let msg = "Failed to create tariff.";
+
+            if (typeof err === "object" && err !== null && "response" in err) {
+                const axiosErr = err as AxiosErrorShape;
+                msg = axiosErr.response?.data?.error ?? msg;
+            }
+
+            toast.error(msg);
         }
     };
 
@@ -180,7 +224,9 @@ export default function ManageTariffPage() {
         <div className="space-y-8">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Manage Tariffs</h1>
-                <p className="text-muted-foreground">Add, update, or remove tariff entries</p>
+                <p className="text-muted-foreground">
+                    Add, update, or remove tariff entries
+                </p>
             </div>
 
             <Card className="border-border/50 shadow-sm">
@@ -199,7 +245,10 @@ export default function ManageTariffPage() {
                             <Label>HS Code</Label>
                             <Popover open={openHS} onOpenChange={setOpenHS}>
                                 <PopoverTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-between h-11 text-left">
+                                    <Button
+                                        variant="outline"
+                                        className="w-full justify-between h-11 text-left"
+                                    >
                                         {newTariff.hsCode?.hsCode
                                             ? `${newTariff.hsCode.hsCode} - ${newTariff.hsCode.description}`
                                             : "Select HS Code"}
@@ -242,7 +291,10 @@ export default function ManageTariffPage() {
                                     type="number"
                                     value={newTariff.baseRate || ""}
                                     onChange={(e) =>
-                                        setNewTariff({ ...newTariff, baseRate: parseFloat(e.target.value) })
+                                        setNewTariff({
+                                            ...newTariff,
+                                            baseRate: parseFloat(e.target.value),
+                                        })
                                     }
                                     className="h-11"
                                 />
@@ -251,7 +303,9 @@ export default function ManageTariffPage() {
                                 <Label>Rate Type</Label>
                                 <Input
                                     value={newTariff.rateType || ""}
-                                    onChange={(e) => setNewTariff({ ...newTariff, rateType: e.target.value })}
+                                    onChange={(e) =>
+                                        setNewTariff({ ...newTariff, rateType: e.target.value })
+                                    }
                                     className="h-11"
                                 />
                             </div>
@@ -260,7 +314,12 @@ export default function ManageTariffPage() {
                                 <Input
                                     type="date"
                                     value={newTariff.effectiveDate || ""}
-                                    onChange={(e) => setNewTariff({ ...newTariff, effectiveDate: e.target.value })}
+                                    onChange={(e) =>
+                                        setNewTariff({
+                                            ...newTariff,
+                                            effectiveDate: e.target.value,
+                                        })
+                                    }
                                     className="h-11"
                                 />
                             </div>
@@ -269,7 +328,9 @@ export default function ManageTariffPage() {
                                 <Input
                                     type="date"
                                     value={newTariff.expiryDate || ""}
-                                    onChange={(e) => setNewTariff({ ...newTariff, expiryDate: e.target.value })}
+                                    onChange={(e) =>
+                                        setNewTariff({ ...newTariff, expiryDate: e.target.value })
+                                    }
                                     className="h-11"
                                 />
                             </div>
@@ -279,7 +340,10 @@ export default function ManageTariffPage() {
                                 <Label>Origin Countries</Label>
                                 <Popover open={openOrigin} onOpenChange={setOpenOrigin}>
                                     <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-between h-11 text-left">
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-between h-11 text-left"
+                                        >
                                             {newTariff.origins?.length
                                                 ? newTariff.origins.join(", ")
                                                 : "Select origins"}
@@ -293,24 +357,42 @@ export default function ManageTariffPage() {
                                                 <CommandEmpty>No countries found.</CommandEmpty>
                                                 <CommandGroup>
                                                     {countries.map((c) => {
-                                                        const selected = newTariff.origins?.includes(c.name);
+                                                        const selected = newTariff.origins?.includes(
+                                                            c.name,
+                                                        );
+                                                        const disabled = newTariff.destinations?.includes(
+                                                            c.name,
+                                                        ); // ⬅ disable if selected in destinations
+
                                                         return (
                                                             <CommandItem
                                                                 key={c.name}
+                                                                disabled={disabled}
                                                                 onSelect={() =>
                                                                     setNewTariff({
                                                                         ...newTariff,
-                                                                        origins: toggleSelection(newTariff.origins, c.name),
+                                                                        origins: toggleSelection(
+                                                                            newTariff.origins,
+                                                                            c.name,
+                                                                        ),
                                                                     })
                                                                 }
                                                             >
                                                                 <Check
                                                                     className={cn(
                                                                         "mr-2 h-4 w-4",
-                                                                        selected ? "opacity-100" : "opacity-0"
+                                                                        selected ? "opacity-100" : "opacity-0",
                                                                     )}
                                                                 />
-                                                                {c.name}
+                                                                <span
+                                                                    className={
+                                                                        disabled
+                                                                            ? "opacity-40 cursor-not-allowed"
+                                                                            : ""
+                                                                    }
+                                                                >
+                                  {c.name}
+                                </span>
                                                             </CommandItem>
                                                         );
                                                     })}
@@ -326,7 +408,10 @@ export default function ManageTariffPage() {
                                 <Label>Destination Countries</Label>
                                 <Popover open={openDest} onOpenChange={setOpenDest}>
                                     <PopoverTrigger asChild>
-                                        <Button variant="outline" className="w-full justify-between h-11 text-left">
+                                        <Button
+                                            variant="outline"
+                                            className="w-full justify-between h-11 text-left"
+                                        >
                                             {newTariff.destinations?.length
                                                 ? newTariff.destinations.join(", ")
                                                 : "Select destinations"}
@@ -340,16 +425,23 @@ export default function ManageTariffPage() {
                                                 <CommandEmpty>No countries found.</CommandEmpty>
                                                 <CommandGroup>
                                                     {countries.map((c) => {
-                                                        const selected = newTariff.destinations?.includes(c.name);
+                                                        const selected = newTariff.destinations?.includes(
+                                                            c.name,
+                                                        );
+                                                        const disabled = newTariff.origins?.includes(
+                                                            c.name,
+                                                        ); // ⬅ disable if selected in origins
+
                                                         return (
                                                             <CommandItem
                                                                 key={c.name}
+                                                                disabled={disabled}
                                                                 onSelect={() =>
                                                                     setNewTariff({
                                                                         ...newTariff,
                                                                         destinations: toggleSelection(
                                                                             newTariff.destinations,
-                                                                            c.name
+                                                                            c.name,
                                                                         ),
                                                                     })
                                                                 }
@@ -357,10 +449,18 @@ export default function ManageTariffPage() {
                                                                 <Check
                                                                     className={cn(
                                                                         "mr-2 h-4 w-4",
-                                                                        selected ? "opacity-100" : "opacity-0"
+                                                                        selected ? "opacity-100" : "opacity-0",
                                                                     )}
                                                                 />
-                                                                {c.name}
+                                                                <span
+                                                                    className={
+                                                                        disabled
+                                                                            ? "opacity-40 cursor-not-allowed"
+                                                                            : ""
+                                                                    }
+                                                                >
+                                  {c.name}
+                                </span>
                                                             </CommandItem>
                                                         );
                                                     })}
@@ -408,9 +508,14 @@ export default function ManageTariffPage() {
                                 {tariffs.map((t) => {
                                     const isEditing = editingId === t.tariffId;
                                     return (
-                                        <tr key={t.tariffId} className="border-t hover:bg-muted/40 transition">
+                                        <tr
+                                            key={t.tariffId}
+                                            className="border-t hover:bg-muted/40 transition"
+                                        >
                                             <td className="px-2 py-1.5">{t.tariffId}</td>
-                                            <td className="px-2 py-1.5 font-mono">{t.hsCode.hsCode}</td>
+                                            <td className="px-2 py-1.5 font-mono">
+                                                {t.hsCode.hsCode}
+                                            </td>
                                             <td className="px-2 py-1.5">
                                                 {isEditing ? (
                                                     <Input
@@ -433,7 +538,10 @@ export default function ManageTariffPage() {
                                                     <Input
                                                         value={editedTariff.rateType ?? t.rateType}
                                                         onChange={(e) =>
-                                                            setEditedTariff({ ...editedTariff, rateType: e.target.value })
+                                                            setEditedTariff({
+                                                                ...editedTariff,
+                                                                rateType: e.target.value,
+                                                            })
                                                         }
                                                         className="h-7 text-xs"
                                                     />
@@ -445,9 +553,16 @@ export default function ManageTariffPage() {
                                             {/* Editable Origins */}
                                             <td className="px-2 py-1.5">
                                                 {isEditing ? (
-                                                    <Popover open={openOriginEdit} onOpenChange={setOpenOriginEdit}>
+                                                    <Popover
+                                                        open={openOriginEdit}
+                                                        onOpenChange={setOpenOriginEdit}
+                                                    >
                                                         <PopoverTrigger asChild>
-                                                            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="h-7 px-2 text-[11px]"
+                                                            >
                                                                 {editedTariff.origins?.length
                                                                     ? editedTariff.origins.join(", ")
                                                                     : "Select origins"}
@@ -459,16 +574,25 @@ export default function ManageTariffPage() {
                                                                 <CommandList>
                                                                     <CommandGroup>
                                                                         {countries.map((c) => {
-                                                                            const selected = editedTariff.origins?.includes(c.name);
+                                                                            const selected =
+                                                                                editedTariff.origins?.includes(
+                                                                                    c.name,
+                                                                                );
+                                                                            const disabled =
+                                                                                editedTariff.destinations?.includes(
+                                                                                    c.name,
+                                                                                );
+
                                                                             return (
                                                                                 <CommandItem
                                                                                     key={c.name}
+                                                                                    disabled={disabled}
                                                                                     onSelect={() =>
                                                                                         setEditedTariff({
                                                                                             ...editedTariff,
                                                                                             origins: toggleSelection(
                                                                                                 editedTariff.origins,
-                                                                                                c.name
+                                                                                                c.name,
                                                                                             ),
                                                                                         })
                                                                                     }
@@ -476,10 +600,20 @@ export default function ManageTariffPage() {
                                                                                     <Check
                                                                                         className={cn(
                                                                                             "mr-2 h-4 w-4",
-                                                                                            selected ? "opacity-100" : "opacity-0"
+                                                                                            selected
+                                                                                                ? "opacity-100"
+                                                                                                : "opacity-0",
                                                                                         )}
                                                                                     />
-                                                                                    {c.name}
+                                                                                    <span
+                                                                                        className={
+                                                                                            disabled
+                                                                                                ? "opacity-40 cursor-not-allowed"
+                                                                                                : ""
+                                                                                        }
+                                                                                    >
+                                              {c.name}
+                                            </span>
                                                                                 </CommandItem>
                                                                             );
                                                                         })}
@@ -489,16 +623,25 @@ export default function ManageTariffPage() {
                                                         </PopoverContent>
                                                     </Popover>
                                                 ) : (
-                                                    t.tariffOrigins.map((o) => o.country.name).join(", ") || "—"
+                                                    t.tariffOrigins
+                                                        .map((o) => o.country.name)
+                                                        .join(", ") || "—"
                                                 )}
                                             </td>
 
                                             {/* Editable Destinations */}
                                             <td className="px-2 py-1.5">
                                                 {isEditing ? (
-                                                    <Popover open={openDestEdit} onOpenChange={setOpenDestEdit}>
+                                                    <Popover
+                                                        open={openDestEdit}
+                                                        onOpenChange={setOpenDestEdit}
+                                                    >
                                                         <PopoverTrigger asChild>
-                                                            <Button variant="outline" size="sm" className="h-7 px-2 text-[11px]">
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="h-7 px-2 text-[11px]"
+                                                            >
                                                                 {editedTariff.destinations?.length
                                                                     ? editedTariff.destinations.join(", ")
                                                                     : "Select destinations"}
@@ -511,16 +654,24 @@ export default function ManageTariffPage() {
                                                                     <CommandGroup>
                                                                         {countries.map((c) => {
                                                                             const selected =
-                                                                                editedTariff.destinations?.includes(c.name);
+                                                                                editedTariff.origins?.includes(
+                                                                                    c.name,
+                                                                                );
+                                                                            const disabled =
+                                                                                editedTariff.origins?.includes(
+                                                                                    c.name,
+                                                                                );
+
                                                                             return (
                                                                                 <CommandItem
                                                                                     key={c.name}
+                                                                                    disabled={disabled}
                                                                                     onSelect={() =>
                                                                                         setEditedTariff({
                                                                                             ...editedTariff,
-                                                                                            destinations: toggleSelection(
-                                                                                                editedTariff.destinations,
-                                                                                                c.name
+                                                                                            origins: toggleSelection(
+                                                                                                editedTariff.origins,
+                                                                                                c.name,
                                                                                             ),
                                                                                         })
                                                                                     }
@@ -528,10 +679,20 @@ export default function ManageTariffPage() {
                                                                                     <Check
                                                                                         className={cn(
                                                                                             "mr-2 h-4 w-4",
-                                                                                            selected ? "opacity-100" : "opacity-0"
+                                                                                            selected
+                                                                                                ? "opacity-100"
+                                                                                                : "opacity-0",
                                                                                         )}
                                                                                     />
-                                                                                    {c.name}
+                                                                                    <span
+                                                                                        className={
+                                                                                            disabled
+                                                                                                ? "opacity-40 cursor-not-allowed"
+                                                                                                : ""
+                                                                                        }
+                                                                                    >
+                                              {c.name}
+                                            </span>
                                                                                 </CommandItem>
                                                                             );
                                                                         })}
@@ -541,7 +702,9 @@ export default function ManageTariffPage() {
                                                         </PopoverContent>
                                                     </Popover>
                                                 ) : (
-                                                    t.tariffDestinations.map((d) => d.country.name).join(", ") || "—"
+                                                    t.tariffDestinations
+                                                        .map((d) => d.country.name)
+                                                        .join(", ") || "—"
                                                 )}
                                             </td>
 
@@ -577,10 +740,10 @@ export default function ManageTariffPage() {
                                                                     setEditedTariff({
                                                                         ...t,
                                                                         origins: t.tariffOrigins.map(
-                                                                            (o) => o.country.name
+                                                                            (o) => o.country.name,
                                                                         ),
                                                                         destinations: t.tariffDestinations.map(
-                                                                            (d) => d.country.name
+                                                                            (d) => d.country.name,
                                                                         ),
                                                                     });
                                                                 }}
