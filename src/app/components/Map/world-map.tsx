@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { Tooltip } from "react-tooltip";
 import { CountryDetail } from "./country-detail";
@@ -44,25 +44,29 @@ const COUNTRY_NAME_MAP: Record<string, string> = {
 };
 
 export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
+  const [tooltipContent, setTooltipContent] = useState("");
   const [selectedCountry, setSelectedCountry] = useState<{
-    countryName: string;
+    name: string;
     agreements: TradeAgreement[];
   } | null>(null);
-  const [tooltipContent, setTooltipContent] = useState("");
 
   const normalizeCountryName = (geoName: string) =>
     COUNTRY_NAME_MAP[geoName] || geoName;
 
-  const getCountryAgreementsCount = (countryName: string) => {
+  const getTradeAgreements = (countryName: string) => {
     const normalized = normalizeCountryName(countryName);
     return tradeAgreements.filter(
       (t) =>
         t.countryA.toLowerCase() === normalized.toLowerCase() ||
         t.countryB.toLowerCase() === normalized.toLowerCase()
-    ).length;
+    );
   };
 
-  const getCountryColor = (count: number) => {
+  const getFillColor = (geo: CountryFeature) => {
+    const geoName = geo.properties.name;
+    const agreements = getTradeAgreements(geoName);
+    const count = agreements.length;
+
     if (count >= 10) return "#0047AB";
     if (count >= 6) return "#1976D2";
     if (count >= 3) return "#64B5F6";
@@ -70,66 +74,79 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     return "#E0E0E0";
   };
 
+  const handleMouseEnter = (geo: CountryFeature) => {
+    const geoName = geo.properties.name;
+    const agreements = getTradeAgreements(geoName);
+    setTooltipContent(
+      `<strong>${geoName}</strong><br/>${agreements.length} ${
+        agreements.length === 1 ? "agreement" : "agreements"
+      }`
+    );
+  };
+
+  const handleMouseLeave = () => {
+    setTooltipContent("");
+  };
+
   const handleCountryClick = (geo: CountryFeature) => {
     const geoName = geo.properties.name;
-    const normalized = normalizeCountryName(geoName);
-    const agreements = tradeAgreements.filter(
-      (t) =>
-        t.countryA.toLowerCase() === normalized.toLowerCase() ||
-        t.countryB.toLowerCase() === normalized.toLowerCase()
-    );
-    setSelectedCountry({ countryName: normalized, agreements });
+    const agreements = getTradeAgreements(geoName);
+    setSelectedCountry({ name: geoName, agreements });
   };
 
   return (
-    <div className="w-full flex flex-col items-center">
-      {/* 🌍 Auto-fit responsive map */}
-      <ComposableMap
-        projection="geoEqualEarth"
-        style={{
-          width: "100%",
-          height: "auto",
-        }}
+    <div className="w-full h-full flex flex-col items-center justify-center">
+      <div
+        data-tooltip-id="map-tooltip"
+        data-tooltip-html={tooltipContent}
+        className="w-full h-full flex items-center justify-center"
       >
-        <Geographies geography={geoUrl}>
-          {({ geographies }) =>
-            geographies.map((geo) => {
-              const geoName = geo.properties.name;
-              const count = getCountryAgreementsCount(geoName);
-              const fillColor = getCountryColor(count);
-
-              return (
+        <ComposableMap
+          projectionConfig={{ scale: 150 }}
+          width={980}
+          height={551}
+          style={{
+            width: "100%",
+            height: "auto",
+            maxHeight: "80vh",
+          }}
+        >
+          <Geographies geography={geoUrl}>
+            {({ geographies }) =>
+              geographies.map((geo) => (
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
-                  onMouseEnter={() =>
-                    setTooltipContent(
-                      `${geoName} — ${count} ${
-                        count === 1 ? "agreement" : "agreements"
-                      }`
-                    )
-                  }
-                  onMouseLeave={() => setTooltipContent("")}
+                  onMouseEnter={() => handleMouseEnter(geo as CountryFeature)}
+                  onMouseLeave={handleMouseLeave}
                   onClick={() => handleCountryClick(geo as CountryFeature)}
-                  data-tooltip-id="tooltip"
-                  data-tooltip-content={tooltipContent}
                   style={{
-                    default: { fill: fillColor, outline: "none" },
+                    default: {
+                      fill: getFillColor(geo as CountryFeature),
+                      outline: "none",
+                    },
                     hover: { fill: "#0077b6", outline: "none" },
                     pressed: { fill: "#023e8a", outline: "none" },
                   }}
                 />
-              );
-            })
-          }
-        </Geographies>
-      </ComposableMap>
+              ))
+            }
+          </Geographies>
+        </ComposableMap>
+      </div>
 
-      <Tooltip id="tooltip" />
+      <Tooltip
+        id="map-tooltip"
+        place="top"
+        className="!bg-background !text-foreground !shadow-lg !border !border-border !rounded-lg !z-50 !max-w-[400px]"
+        style={{ maxWidth: "400px" }}
+        float
+        positionStrategy="fixed"
+      />
 
       {selectedCountry && (
         <CountryDetail
-          countryName={selectedCountry.countryName}
+          countryName={selectedCountry.name}
           agreements={selectedCountry.agreements}
           onClose={() => setSelectedCountry(null)}
         />
