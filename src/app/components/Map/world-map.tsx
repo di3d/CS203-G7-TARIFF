@@ -53,13 +53,11 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapWidth, setMapWidth] = useState(980);
 
-  // 🧭 Dynamically resize map based on screen DPI and width
+  // ✅ Dynamically resize map (no pixel ratio multiplier)
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
-        const newWidth =
-          containerRef.current.getBoundingClientRect().width *
-          window.devicePixelRatio;
+        const newWidth = containerRef.current.getBoundingClientRect().width;
 
         if (newWidth < 500) setMapWidth(420);
         else if (newWidth < 900) setMapWidth(700);
@@ -92,4 +90,56 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   };
 
   const handleMouseEnter = (geo: CountryFeature) => {
-    const geoName = geo.properties
+    const geoName = geo.properties.name;
+    const data = getCountryData(geoName);
+    setTooltipContent(data ? data.name : geoName);
+  };
+
+  const handleMouseLeave = () => {
+    setTooltipContent("");
+  };
+
+  const handleCountryClick = (geo: CountryFeature) => {
+    const geoName = geo.properties.name;
+    const agreements = getTradeAgreements(geoName);
+    setSelectedCountry({ name: geoName, agreements });
+  };
+
+  return (
+    <div ref={containerRef} className="w-full flex flex-col items-center">
+      <ComposableMap width={mapWidth}>
+        <Geographies geography={geoUrl}>
+          {({ geographies }) =>
+            geographies.map((geo) => (
+              <Geography
+                key={geo.rsmKey}
+                geography={geo}
+                onMouseEnter={() => handleMouseEnter(geo as CountryFeature)}
+                onMouseLeave={handleMouseLeave}
+                onClick={() => handleCountryClick(geo as CountryFeature)}
+                style={{
+                  default: { fill: "#E0E0E0", outline: "none" },
+                  hover: { fill: "#0077b6", outline: "none" },
+                  pressed: { fill: "#023e8a", outline: "none" },
+                }}
+              />
+            ))
+          }
+        </Geographies>
+      </ComposableMap>
+
+      <Tooltip id="tooltip" open={!!tooltipContent}>
+        {tooltipContent}
+      </Tooltip>
+
+      {selectedCountry && (
+        <div className="mt-4 w-full max-w-2xl">
+          <CountryDetail
+            name={selectedCountry.name}
+            agreements={selectedCountry.agreements}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
