@@ -177,22 +177,35 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
     };
 
     return (
-        <div className="w-full">
+        <div className="w-full h-full flex flex-col items-center justify-center">
             <div
                 data-tooltip-id="map-tooltip"
                 data-tooltip-html={tooltipContent}
-                className="w-full"
+                className="w-full h-full flex items-center justify-center"
             >
-                <ComposableMap projectionConfig={{ scale: 147 }} className="w-full h-auto">
+                <ComposableMap
+                    projectionConfig={{ scale: 150 }}
+                    width={980}
+                    height={551}
+                    style={{
+                        width: "100%",
+                        height: "auto",
+                        maxHeight: "80vh",
+                    }}
+                >
                     <Geographies geography={geoUrl}>
                         {({ geographies }) =>
                             geographies.map((geo) => (
                                 <Geography
                                     key={geo.rsmKey}
                                     geography={geo}
-                                    onMouseEnter={() => handleMouseEnter(geo as CountryFeature)}
+                                    onMouseEnter={() =>
+                                        handleMouseEnter(geo as CountryFeature)
+                                    }
                                     onMouseLeave={handleMouseLeave}
-                                    onClick={() => handleCountryClick(geo as CountryFeature)}
+                                    onClick={() =>
+                                        handleCountryClick(geo as CountryFeature)
+                                    }
                                     style={{
                                         default: {
                                             fill: getFillColor(geo as CountryFeature),
@@ -213,7 +226,6 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
                                         },
                                     }}
                                 />
-
                             ))
                         }
                     </Geographies>
