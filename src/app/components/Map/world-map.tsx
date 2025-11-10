@@ -53,14 +53,12 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapWidth, setMapWidth] = useState(980);
 
-  // ✅ Dynamically resize map based on container width
+  // 🧭 Responsive resize (consistent across devices)
   useEffect(() => {
     const handleResize = () => {
       if (containerRef.current) {
         const newWidth = containerRef.current.getBoundingClientRect().width;
-        if (newWidth < 500) setMapWidth(420);
-        else if (newWidth < 900) setMapWidth(700);
-        else setMapWidth(980);
+        setMapWidth(Math.min(Math.max(newWidth, 700), 1100));
       }
     };
 
@@ -72,61 +70,85 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
   const normalizeCountryName = (geoName: string) =>
     COUNTRY_NAME_MAP[geoName] || geoName;
 
-  const getCountryData = (geoName: string) => {
-    const normalized = normalizeCountryName(geoName);
-    return countries.find(
-      (c) => c.name.toLowerCase() === normalized.toLowerCase()
-    );
-  };
-
-  const getTradeAgreements = (countryName: string) => {
+  const getCountryAgreementsCount = (countryName: string) => {
     const normalized = normalizeCountryName(countryName);
     return tradeAgreements.filter(
       (t) =>
         t.countryA.toLowerCase() === normalized.toLowerCase() ||
         t.countryB.toLowerCase() === normalized.toLowerCase()
-    );
+    ).length;
+  };
+
+  const getCountryColor = (count: number) => {
+    if (count >= 10) return "#0047AB"; // dark blue
+    if (count >= 6) return "#1976D2"; // medium blue
+    if (count >= 3) return "#64B5F6"; // light blue
+    if (count >= 1) return "#BBDEFB"; // very light blue
+    return "#E0E0E0"; // grey for no data
   };
 
   const handleMouseEnter = (geo: CountryFeature) => {
     const geoName = geo.properties.name;
-    const data = getCountryData(geoName);
-    setTooltipContent(data ? data.name : geoName);
+    setTooltipContent(geoName);
   };
 
-  const handleMouseLeave = () => {
-    setTooltipContent("");
-  };
+  const handleMouseLeave = () => setTooltipContent("");
 
   const handleCountryClick = (geo: CountryFeature) => {
     const geoName = geo.properties.name;
-    const agreements = getTradeAgreements(geoName);
-    setSelectedCountry({ countryName: geoName, agreements });
+    const normalized = normalizeCountryName(geoName);
+    const agreements = tradeAgreements.filter(
+      (t) =>
+        t.countryA.toLowerCase() === normalized.toLowerCase() ||
+        t.countryB.toLowerCase() === normalized.toLowerCase()
+    );
+    setSelectedCountry({ countryName: normalized, agreements });
   };
 
   const handleCloseDetail = () => setSelectedCountry(null);
 
   return (
     <div ref={containerRef} className="w-full flex flex-col items-center">
-      <ComposableMap width={mapWidth}>
+      <ComposableMap
+        projection="geoEqualEarth"
+        projectionConfig={{
+          scale: mapWidth / 2.8,
+          center: [10, 15],
+          translate: [mapWidth / 2, mapWidth / 3],
+        }}
+        width={mapWidth}
+        height={mapWidth * 0.55}
+        style={{
+          width: "100%",
+          height: "auto",
+        }}
+      >
         <Geographies geography={geoUrl}>
           {({ geographies }) =>
-            geographies.map((geo) => (
-              <Geography
-                key={geo.rsmKey}
-                geography={geo}
-                onMouseEnter={() => handleMouseEnter(geo as CountryFeature)}
-                onMouseLeave={handleMouseLeave}
-                onClick={() => handleCountryClick(geo as CountryFeature)}
-                data-tooltip-id="tooltip"
-                data-tooltip-content={tooltipContent}
-                style={{
-                  default: { fill: "#E0E0E0", outline: "none" },
-                  hover: { fill: "#0077b6", outline: "none" },
-                  pressed: { fill: "#023e8a", outline: "none" },
-                }}
-              />
-            ))
+            geographies.map((geo) => {
+              const geoName = geo.properties.name;
+              const count = getCountryAgreementsCount(geoName);
+              const fillColor = getCountryColor(count);
+
+              return (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  onMouseEnter={() => handleMouseEnter(geo as CountryFeature)}
+                  onMouseLeave={handleMouseLeave}
+                  onClick={() => handleCountryClick(geo as CountryFeature)}
+                  data-tooltip-id="tooltip"
+                  data-tooltip-content={`${geoName} — ${count} ${
+                    count === 1 ? "agreement" : "agreements"
+                  }`}
+                  style={{
+                    default: { fill: fillColor, outline: "none" },
+                    hover: { fill: "#0077b6", outline: "none" },
+                    pressed: { fill: "#023e8a", outline: "none" },
+                  }}
+                />
+              );
+            })
           }
         </Geographies>
       </ComposableMap>
