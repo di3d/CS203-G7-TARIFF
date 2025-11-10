@@ -117,6 +117,8 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
                 onMouseEnter={() => handleMouseEnter(geo as CountryFeature)}
                 onMouseLeave={handleMouseLeave}
                 onClick={() => handleCountryClick(geo as CountryFeature)}
+                data-tooltip-id="tooltip"
+                data-tooltip-content={tooltipContent}
                 style={{
                   default: { fill: "#E0E0E0", outline: "none" },
                   hover: { fill: "#0077b6", outline: "none" },
@@ -128,9 +130,7 @@ export function WorldMap({ countries, tradeAgreements }: WorldMapProps) {
         </Geographies>
       </ComposableMap>
 
-      <Tooltip id="tooltip" open={!!tooltipContent}>
-        {tooltipContent}
-      </Tooltip>
+      <Tooltip id="tooltip" />
 
       {selectedCountry && (
         <div className="mt-4 w-full max-w-2xl">
