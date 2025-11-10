@@ -351,59 +351,130 @@ export default function ManageTariffPage() {
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {tariffs.map((t) => (
-                                    <tr
-                                        key={t.tariffId}
-                                        className="border-t hover:bg-muted/40 transition"
-                                    >
-                                        <td className="px-2 py-1.5">{t.tariffId}</td>
-                                        <td className="px-2 py-1.5 font-mono">{t.hsCode.hsCode}</td>
-                                        <td className="px-2 py-1.5">{t.hsCode.description}</td>
-                                        <td className="px-2 py-1.5">{t.baseRate}%</td>
-                                        <td className="px-2 py-1.5">{t.rateType}</td>
-                                        <td className="px-2 py-1.5">{formatDate(t.effectiveDate)}</td>
-                                        <td className="px-2 py-1.5">{formatDate(t.expiryDate)}</td>
-                                        <td className="px-2 py-1.5">
-                                            {t.tariffOrigins.map((o) => o.country.name).join(", ") || "—"}
-                                        </td>
-                                        <td className="px-2 py-1.5">
-                                            {t.tariffDestinations
-                                                .map((d) => d.country.name)
-                                                .join(", ") || "—"}
-                                        </td>
-                                        <td className="px-2 py-1.5 text-center">
-                                            <div className="flex gap-1 justify-center">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-6 px-2 text-[11px]"
-                                                    onClick={() => {
-                                                        setEditingId(t.tariffId!);
-                                                        setEditedTariff({
-                                                            ...t,
-                                                            origins: t.tariffOrigins
-                                                                .map((o) => o.country.name)
-                                                                .join(", "),
-                                                            destinations: t.tariffDestinations
-                                                                .map((d) => d.country.name)
-                                                                .join(", "),
-                                                        });
-                                                    }}
-                                                >
-                                                    <Edit2 className="h-3 w-3" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    className="h-6 px-2 text-[11px]"
-                                                    onClick={() => void handleDelete(t.tariffId)}
-                                                >
-                                                    <Trash2 className="h-3 w-3" />
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {tariffs.map((t) => {
+                                    const isEditing = editingId === t.tariffId;
+                                    return (
+                                        <tr key={t.tariffId} className="border-t hover:bg-muted/40 transition">
+                                            <td className="px-2 py-1.5">{t.tariffId}</td>
+                                            <td className="px-2 py-1.5 font-mono">{t.hsCode.hsCode}</td>
+                                            <td className="px-2 py-1.5">{t.hsCode.description}</td>
+                                            <td className="px-2 py-1.5">
+                                                {isEditing ? (
+                                                    <Input
+                                                        type="number"
+                                                        value={editedTariff.baseRate ?? t.baseRate}
+                                                        onChange={(e) =>
+                                                            setEditedTariff({
+                                                                ...editedTariff,
+                                                                baseRate: parseFloat(e.target.value),
+                                                            })
+                                                        }
+                                                        className="h-7 text-xs"
+                                                    />
+                                                ) : (
+                                                    `${t.baseRate}%`
+                                                )}
+                                            </td>
+                                            <td className="px-2 py-1.5">
+                                                {isEditing ? (
+                                                    <Input
+                                                        value={editedTariff.rateType ?? t.rateType}
+                                                        onChange={(e) =>
+                                                            setEditedTariff({
+                                                                ...editedTariff,
+                                                                rateType: e.target.value,
+                                                            })
+                                                        }
+                                                        className="h-7 text-xs"
+                                                    />
+                                                ) : (
+                                                    t.rateType
+                                                )}
+                                            </td>
+                                            <td className="px-2 py-1.5">{formatDate(t.effectiveDate)}</td>
+                                            <td className="px-2 py-1.5">{formatDate(t.expiryDate)}</td>
+                                            <td className="px-2 py-1.5">
+                                                {isEditing ? (
+                                                    <Input
+                                                        value={editedTariff.origins ?? t.tariffOrigins.map((o) => o.country.name).join(", ")}
+                                                        onChange={(e) =>
+                                                            setEditedTariff({ ...editedTariff, origins: e.target.value })
+                                                        }
+                                                        className="h-7 text-xs"
+                                                    />
+                                                ) : (
+                                                    t.tariffOrigins.map((o) => o.country.name).join(", ") || "—"
+                                                )}
+                                            </td>
+                                            <td className="px-2 py-1.5">
+                                                {isEditing ? (
+                                                    <Input
+                                                        value={
+                                                            editedTariff.destinations ??
+                                                            t.tariffDestinations.map((d) => d.country.name).join(", ")
+                                                        }
+                                                        onChange={(e) =>
+                                                            setEditedTariff({ ...editedTariff, destinations: e.target.value })
+                                                        }
+                                                        className="h-7 text-xs"
+                                                    />
+                                                ) : (
+                                                    t.tariffDestinations.map((d) => d.country.name).join(", ") || "—"
+                                                )}
+                                            </td>
+                                            <td className="px-2 py-1.5 text-center">
+                                                <div className="flex gap-1 justify-center">
+                                                    {isEditing ? (
+                                                        <>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-6 px-2 text-[11px]"
+                                                                onClick={handleSave}
+                                                            >
+                                                                <Save className="h-3 w-3" />
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-6 px-2 text-[11px]"
+                                                                onClick={() => setEditingId(null)}
+                                                            >
+                                                                <X className="h-3 w-3" />
+                                                            </Button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-6 px-2 text-[11px]"
+                                                                onClick={() => {
+                                                                    setEditingId(t.tariffId!);
+                                                                    setEditedTariff({
+                                                                        ...t,
+                                                                        origins: t.tariffOrigins.map((o) => o.country.name).join(", "),
+                                                                        destinations: t.tariffDestinations.map((d) => d.country.name).join(", "),
+                                                                    });
+                                                                }}
+                                                            >
+                                                                <Edit2 className="h-3 w-3" />
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="destructive"
+                                                                className="h-6 px-2 text-[11px]"
+                                                                onClick={() => void handleDelete(t.tariffId)}
+                                                            >
+                                                                <Trash2 className="h-3 w-3" />
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                                 </tbody>
                             </table>
                         )}
