@@ -104,6 +104,7 @@ export default function MapPage() {
                     )}
                 </CardContent>
             </Card>
+
         </div>
     );
 }

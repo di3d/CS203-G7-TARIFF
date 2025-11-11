@@ -120,7 +120,7 @@ export default function ManageHsCodes() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Cog className="h-5 w-5" />
+                    <Cog className="h-10 w-10 text-primary" />
                     Manage HS Codes
                 </CardTitle>
             </CardHeader>

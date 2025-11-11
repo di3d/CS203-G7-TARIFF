@@ -2,9 +2,10 @@
 
 import {useEffect, useState} from "react";
 import {useRouter} from "next/navigation";
-import ManageTariff from "@/app/components/ManageTariff";
 import {ManageCountry} from "@/app/components/ManageCountry";
 import ManageHsCodes from "@/app/components/ManageHsCodes";
+import AddTariff from "@/app/components/AddTariff";
+import EditTariff from "@/app/components/EditTariff";
 
 export default function AdminPage() {
     const router = useRouter();
@@ -37,7 +38,8 @@ export default function AdminPage() {
     return (
         <div className="space-y-6">
             <ManageCountry/>
-            <ManageTariff/>
+            <AddTariff/>
+            <EditTariff/>
             <ManageHsCodes/>
         </div>
     );

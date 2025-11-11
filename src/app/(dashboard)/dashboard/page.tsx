@@ -34,7 +34,7 @@ export default function DashboardPage() {
         const fetchData = async () => {
             try {
                 const [tariffsRes, countriesRes] = await Promise.all([
-                    api.get<Tariff[]>("/trade-agreements/tariffs"),
+                    api.get<Tariff[]>("/trade-agreements"),
                     api.get<Country[]>("/countries"),
                 ]);
 

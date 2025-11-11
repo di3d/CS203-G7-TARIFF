@@ -10,7 +10,7 @@ import {
     SelectItem,
     SelectValue,
 } from "@/app/components/ui/select";
-import { Trash2, Plus, Loader2 } from "lucide-react";
+import {Trash2, Plus, Loader2, Earth} from "lucide-react";
 import { api } from "@/lib/api";
 import countries from "world-countries";
 import axios from "axios";
@@ -84,7 +84,10 @@ export function ManageCountry() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Countries</CardTitle>
+
+                <CardTitle className="flex items-center gap-2">
+                    <Earth className="h-10 w-10 text-primary"/>
+                    Countries</CardTitle>
             </CardHeader>
 
             <CardContent>

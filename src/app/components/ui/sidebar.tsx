@@ -11,6 +11,8 @@ import {
     LogIn,
     User,
     FileSearch,
+    ChevronDown,
+    ChevronUp,
 } from "lucide-react";
 import { Button } from "./button";
 import { ThemeToggle } from "../Map/theme-toggle";
@@ -23,11 +25,20 @@ const baseRoutes = [
     { label: "HS Codes", icon: FileSearch, href: "/hscodes" },
 ];
 
+// Define types for nav routes
+interface NavRoute {
+    label: string;
+    icon: React.ComponentType<any>;
+    href: string;
+    isAdmin?: boolean; // Optional property for admin routes
+}
+
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [role, setRole] = useState<string | null>(null);
+    const [isAdminOpen, setIsAdminOpen] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -90,37 +101,89 @@ export function Sidebar() {
         }
     }, [isLoggedIn, role, pathname, router]);
 
-    const navRoutes = [
+    const navRoutes: NavRoute[] = [
         ...baseRoutes,
         ...(isLoggedIn && role?.toLowerCase() === "admin"
-            ? [{ label: "Admin", icon: User, href: "/admin2" }]
+            ? [
+                { label: "Admin", icon: User, href: "#", isAdmin: true }, // Admin itself is now the dropdown toggle
+            ]
             : []),
     ];
 
+    const adminSubsections = [
+        { label: "Manage Tariffs", href: "/admin2/tariffs" },
+        { label: "Manage HS Codes", href: "/admin2/hscodes" },
+        { label: "Manage Countries", href: "/admin2/countries" },
+        { label: "Manage Trade Agreements", href: "/admin2/trade-agreements" },
+    ];
+
     return (
-        <aside className="flex flex-col h-full bg-background border-r">
+        <aside className="flex flex-col h-full bg-background border-r border-border/30 shadow-md">
             <div className="px-3 py-4">
                 <Link href="/dashboard" className="flex items-center pl-3 mb-10">
-                    <h1 className="text-2xl font-bold">Tarrific</h1>
+                    <h1 className="text-2xl font-bold text-primary">Tarrific</h1>
                 </Link>
             </div>
             <nav className="flex-1 space-y-1 px-3">
-                {navRoutes.map(({ label, icon: Icon, href }) => {
+                {navRoutes.map(({ label, icon: Icon, href, isAdmin }) => {
                     const active = pathname === href;
                     return (
-                        <Link
-                            key={href}
-                            href={href}
-                            className={cn(
-                                "group flex items-center p-3 rounded-lg font-medium text-sm transition",
-                                active
-                                    ? "bg-primary/10 text-primary"
-                                    : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                        <div key={href}>
+                            {/* Admin link as a dropdown toggle */}
+                            {isAdmin ? (
+                                <div>
+                                    <Button
+                                        onClick={() => setIsAdminOpen(!isAdminOpen)}
+                                        variant="ghost"
+                                        className={cn(
+                                            "group flex items-center p-3 rounded-lg font-medium text-sm transition",
+                                            active
+                                                ? "bg-primary/10 text-primary"
+                                                : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                        )}
+                                    >
+                                        <Icon className="h-5 w-5 mr-3 shrink-0" />
+                                        {label}
+                                        <ChevronDown
+                                            className={cn(
+                                                "ml-auto h-5 w-5 transition-transform",
+                                                isAdminOpen && "rotate-180"
+                                            )}
+                                        />
+                                    </Button>
+
+                                    {/* Admin Subsections */}
+                                    {isAdminOpen &&
+                                        adminSubsections.map(({ label, href }) => (
+                                            <Link
+                                                key={href}
+                                                href={href}
+                                                className={cn(
+                                                    "group pl-8 flex items-center p-3 rounded-lg font-medium text-sm transition",
+                                                    pathname === href
+                                                        ? "bg-primary/20 text-primary"
+                                                        : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                                )}
+                                            >
+                                                {label}
+                                            </Link>
+                                        ))}
+                                </div>
+                            ) : (
+                                <Link
+                                    href={href}
+                                    className={cn(
+                                        "group flex items-center p-3 rounded-lg font-medium text-sm transition",
+                                        active
+                                            ? "bg-primary/10 text-primary"
+                                            : "text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                    )}
+                                >
+                                    <Icon className="h-5 w-5 mr-3 shrink-0" />
+                                    {label}
+                                </Link>
                             )}
-                        >
-                            <Icon className="h-5 w-5 mr-3 shrink-0" />
-                            {label}
-                        </Link>
+                        </div>
                     );
                 })}
             </nav>
