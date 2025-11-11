@@ -1,9 +1,11 @@
 import ManageTradeAgreements from "@/app/components/ManageTradeAgreement";
 
-export default function (){
+function TradeAgreementsPage() {
     return (
         <div>
-            <ManageTradeAgreements/>
+            <ManageTradeAgreements />
         </div>
-    )
+    );
 }
+
+export default TradeAgreementsPage;

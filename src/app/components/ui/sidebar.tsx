@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -25,10 +25,10 @@ const baseRoutes = [
     { label: "HS Codes", icon: FileSearch, href: "/hscodes" },
 ];
 
-// Define types for nav routes
+// Define types for nav routes with SVG icons
 interface NavRoute {
     label: string;
-    icon: React.ComponentType<any>;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>; // for SVG components
     href: string;
     isAdmin?: boolean; // Optional property for admin routes
 }
