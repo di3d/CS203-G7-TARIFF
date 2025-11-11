@@ -78,7 +78,6 @@ export default function DashboardPage() {
             </div>
             <TradeAgreementsCard />
             <TariffViewer />
-            <HSCodeBreakdownChart/>
         </div>
     );
 }
