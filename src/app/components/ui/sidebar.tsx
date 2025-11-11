@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 const baseRoutes = [
     { label: "Dashboard", icon: Home, href: "/dashboard" },
     { label: "Calculator", icon: Calculator, href: "/calculator" },
+    { label: "Tariff Map", icon: Globe, href: "/map"},
     { label: "HS Codes", icon: FileSearch, href: "/hscodes" },
 ];
 
