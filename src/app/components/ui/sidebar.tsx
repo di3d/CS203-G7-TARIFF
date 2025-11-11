@@ -21,7 +21,6 @@ import { cn } from "@/lib/utils";
 const baseRoutes = [
     { label: "Dashboard", icon: Home, href: "/dashboard" },
     { label: "Calculator", icon: Calculator, href: "/calculator" },
-    { label: "Tariff Map", icon: Globe, href: "/map" },
     { label: "HS Codes", icon: FileSearch, href: "/hscodes" },
 ];
 
@@ -114,7 +113,6 @@ export function Sidebar() {
         { label: "Manage Tariffs", href: "/admin2/tariffs" },
         { label: "Manage HS Codes", href: "/admin2/hscodes" },
         { label: "Manage Countries", href: "/admin2/countries" },
-        { label: "Manage Trade Agreements", href: "/admin2/trade-agreements" },
     ];
 
     return (
